@@ -61,12 +61,10 @@ for ((i = 0; i < 26; i++)); do
     fi
 done
 
-echo ""
-
 # wypisanie argumentow
 argNum=$#
 optNum=$OPTIND
-if (( $((argNum - optNum)) > 0 )) ; then
+if (( $((argNum - optNum + 1)) > 0 )) ; then
     echo "Arguments are:"
     for i in $(seq $optNum $argNum) ; do
         ind=$((i - optNum + 1))
