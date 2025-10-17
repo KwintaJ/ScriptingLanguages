@@ -68,6 +68,6 @@ if (( $((argNum - optNum + 1)) > 0 )) ; then
     echo "Arguments are:"
     for i in $(seq $optNum $argNum) ; do
         ind=$((i - optNum + 1))
-        echo "\$${ind} = ${!i}"
+        echo "\$${ind}=${!i}"
     done
 fi
