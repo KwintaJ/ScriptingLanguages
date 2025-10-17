@@ -11,7 +11,7 @@ options=($(printf '0 %.0s' {1..26}))
 
 # sprawdzenie obecnych flag opcji
 # i zaznaczenie tego w tablicy
-while getopts "qabcdefghijklmnoprstuvwxyz:i:o:" flag; do
+while getopts ":i:o:qabcdefghijklmnoprstuvwxyz" flag; do
     case "$flag" in
         q)
             # jesli jest -q zakonczenie programu
@@ -20,17 +20,16 @@ while getopts "qabcdefghijklmnoprstuvwxyz:i:o:" flag; do
             ;;
         i)
             # jesli jest opcja -i zapamietujemy nazwe pliku
-            options[$(( $(printf "%d" "'$flag") - 96 ))]=1
+            options[$(( $(printf "%d" "'$flag") - 97 ))]=1
             inputFile="$OPTARG"
             ;;
         o)
             # jesli jest opcja -o zapamietujemy nazwe pliku
-            options[$(( $(printf "%d" "'$flag") - 96 ))]=1
+            options[$(( $(printf "%d" "'$flag") - 97 ))]=1
             outputFile="$OPTARG"
             ;;
         [a-hj-np-z]) 
-            index=$(( $(printf "%d" "'$flag") - 96 ))
-            options[$index]=1
+            options[$(( $(printf "%d" "'$flag") - 97 ))]=1
             ;;
         :)
             # brak nazwy pliku dla -i -o
@@ -40,10 +39,42 @@ while getopts "qabcdefghijklmnoprstuvwxyz:i:o:" flag; do
     esac
 done
 
+# jako nazwa pliku zostala wczytana flaga
+if [[ $inputFile == -* || $outputFile == -* ]] ; then
+    echo "-i -o options require a filename"
+    exit 1
+fi
+
+for ((i = 0; i < 26; i++)); do
+    printf "${options[i]} "
+done
+
+echo ""
+
+# wypisanie obecnych opcji
+# a dla -i oraz -o wypisanie nazw plikow
+for ((i = 0; i < 26; i++)); do
+    letter=$(printf "\\$(printf '%03o' $((97 + i)))")
+
+    printf "$letter "
+
+    # if (( ${options[$((i+1))]} == 1 )) ; then
+    #     if (( $letter == "i" )) ; then
+    #         echo "-$letter present and set to \"$inputFile\""
+    #     elif (( $letter == "o" )) ; then
+    #         echo "-$letter present and set to \"$outputFile\""
+    #     else
+    #         echo "-$letter present"
+    #     fi
+    # fi
+done
+
+echo ""
+
 # wypisanie argumentow
 argNum=$#
 optNum=$OPTIND
-if (( argNum > 0 )) ; then
+if (( $((argNum - optNum)) > 0 )) ; then
     echo "Arguments are:"
     for i in $(seq $optNum $argNum) ; do
         ind=$((i - optNum + 1))
