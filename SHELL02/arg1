@@ -7,20 +7,37 @@
 # Program 1
 set -e
 
-options=()
-for i in {1..26}; do 
-    options+=(0); 
-done
+options=($(printf '0 %.0s' {1..26}))
 
 # sprawdzenie obecnych flag opcji
 # i zaznaczenie tego w tablicy
-while getopts "qabcdefghijklmnoprstuvwxyz" flag; do
-    if [[ $flag == "q" ]]; then
-        options[0]=1
-    else
-        index=$(( $(printf "%d" "'$flag") - 96 ))
-        options[$index]=1
-    fi
+while getopts "qabcdefghijklmnoprstuvwxyz:i:o:" flag; do
+    case "$flag" in
+        q)
+            # jesli jest -q zakonczenie programu
+            echo "Unsupported option: -q"
+            exit 1
+            ;;
+        i)
+            # jesli jest opcja -i zapamietujemy nazwe pliku
+            options[$(( $(printf "%d" "'$flag") - 96 ))]=1
+            inputFile="$OPTARG"
+            ;;
+        o)
+            # jesli jest opcja -o zapamietujemy nazwe pliku
+            options[$(( $(printf "%d" "'$flag") - 96 ))]=1
+            outputFile="$OPTARG"
+            ;;
+        [a-hj-np-z]) 
+            index=$(( $(printf "%d" "'$flag") - 96 ))
+            options[$index]=1
+            ;;
+        :)
+            # brak nazwy pliku dla -i -o
+            echo "-i -o options require a filename"
+            exit 1
+            ;;
+    esac
 done
 
 # wypisanie argumentow
