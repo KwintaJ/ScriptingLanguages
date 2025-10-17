@@ -7,50 +7,44 @@
 # Program 2
 set -e
 
-# obslugiwane krotkie i dlugie opcje
-SHORT_OPTS="i:o:qabcdefghijklmnoprstuvwxyz"
-LONG_OPTS="help"
-
-# parsowanie opcji
-PARSED=$(getopt --options="$SHORT_OPTS" --longoptions="$LONG_OPTS" --name "$0" -- "$@") || exit 1
-eval set -- "$PARSED"
+# sprawdzanie czy nie ma help
+for arg in "$@"; do
+    if [[ $arg != -* ]] ; then
+        break
+    elif [[ "$arg" == "--help" ]]; then
+        echo "help"
+        exit 0
+    fi
+done
 
 options=($(printf '0 %.0s' {1..26}))
-inputFile=""
-outputFile=""
 
-# Przetwarzanie opcji
-while true; do
-    case "$1" in
-        --help)
-            echo "help"
-            exit 1
-            ;;
-        -q)
+# sprawdzenie obecnych flag opcji
+# i zaznaczenie tego w tablicy
+while getopts ":i:o:qabcdefghijklmnoprstuvwxyz" flag; do
+    case "$flag" in
+        q)
             # jesli jest -q zakonczenie programu
             echo "Unsupported option: -q"
-            exit 2
+            exit 1
             ;;
-        -i)
+        i)
             # jesli jest opcja -i zapamietujemy nazwe pliku
-            options[$(( $(printf "%d" "'i") - 97 ))]=1
-            inputFile="$2"
-            shift 2
-            ;;
-        -o)
-            # jesli jest opcja -o zapamietujemy nazwe pliku
-            options[$(( $(printf "%d" "'o") - 97 ))]=1
-            outputFile="$2"
-            shift 2
-            ;;
-        -[a-hj-np-z])
-            flag="${1:1}"
             options[$(( $(printf "%d" "'$flag") - 97 ))]=1
-            shift
+            inputFile="$OPTARG"
             ;;
-        --)
-            shift
-            break
+        o)
+            # jesli jest opcja -o zapamietujemy nazwe pliku
+            options[$(( $(printf "%d" "'$flag") - 97 ))]=1
+            outputFile="$OPTARG"
+            ;;
+        [a-hj-np-z])
+            options[$(( $(printf "%d" "'$flag") - 97 ))]=1
+            ;;
+        :)
+            # brak nazwy pliku dla -i -o
+            echo "-i -o options require a filename"
+            exit 1
             ;;
     esac
 done
@@ -62,13 +56,14 @@ if [[ $inputFile == -* || $outputFile == -* ]] ; then
 fi
 
 # wypisanie obecnych opcji
+# a dla -i oraz -o wypisanie nazw plikow
 for ((i = 0; i < 26; i++)); do
     letter=$(printf "\\$(printf '%03o' $((97 + i)))")
 
-    if (( ${options[i]} == 1 )); then
-        if [[ $letter == "i" ]]; then
+    if (( ${options[i]} == 1 )) ; then
+        if [[ $letter == "i" ]] ; then
             echo "-i present and set to \"$inputFile\""
-        elif [[ $letter == "o" ]]; then
+        elif [[ $letter == "o" ]] ; then
             echo "-o present and set to \"$outputFile\""
         else
             echo "-$letter present"
@@ -76,13 +71,13 @@ for ((i = 0; i < 26; i++)); do
     fi
 done
 
-# wypisanie argumentów
-# argNum=$#
-# optNum=$OPTIND
-# if (( $((argNum - optNum + 1)) > 0 )) ; then
-#     echo "Arguments are:"
-#     for i in $(seq $optNum $argNum) ; do
-#         ind=$((i - optNum + 1))
-#         echo "\$${ind} = ${!i}"
-#     done
-# fi
+# wypisanie argumentow
+argNum=$#
+optNum=$OPTIND
+if (( $((argNum - optNum + 1)) > 0 )) ; then
+    echo "Arguments are:"
+    for i in $(seq $optNum $argNum) ; do
+        ind=$((i - optNum + 1))
+        echo "\$${ind} = ${!i}"
+    done
+fi
