@@ -3,10 +3,12 @@
 #
 # 16.10.2025
 #
-# Zadanie SHELL02
+# Problem SHELL02
+# Program 1
 set -e
 
-while getopts "abcde" flag; do
+# wypisanie 
+while getopts "abcdeq" flag; do
     case ${flag} in
         a) echo "-a present"
         ;;
@@ -18,8 +20,14 @@ while getopts "abcde" flag; do
         ;;
         e) echo "-e present"
         ;;
+        q) echo "Unsupported option: -q"
+        ;;
     esac
 done
 
-shift $(($OPTIND - 1))
-echo "Arguments are: $*"
+# wypisanie argumentow
+if (( "$#" < 1 )) ; then
+    shift $(($OPTIND - 1))
+    echo "Arguments are: $*"
+fi
+
