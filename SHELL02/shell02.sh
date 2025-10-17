@@ -20,3 +20,6 @@ while getopts "abcde" flag; do
         ;;
     esac
 done
+
+shift $(($OPTIND - 1))
+echo "Arguments are: $*"
