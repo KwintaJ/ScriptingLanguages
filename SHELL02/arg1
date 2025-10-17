@@ -28,7 +28,7 @@ while getopts ":i:o:qabcdefghijklmnoprstuvwxyz" flag; do
             options[$(( $(printf "%d" "'$flag") - 97 ))]=1
             outputFile="$OPTARG"
             ;;
-        [a-hj-np-z]) 
+        [a-hj-np-z])
             options[$(( $(printf "%d" "'$flag") - 97 ))]=1
             ;;
         :)
