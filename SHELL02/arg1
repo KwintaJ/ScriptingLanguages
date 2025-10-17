@@ -45,28 +45,20 @@ if [[ $inputFile == -* || $outputFile == -* ]] ; then
     exit 1
 fi
 
-for ((i = 0; i < 26; i++)); do
-    printf "${options[i]} "
-done
-
-echo ""
-
 # wypisanie obecnych opcji
 # a dla -i oraz -o wypisanie nazw plikow
 for ((i = 0; i < 26; i++)); do
     letter=$(printf "\\$(printf '%03o' $((97 + i)))")
 
-    printf "$letter "
-
-    # if (( ${options[$((i+1))]} == 1 )) ; then
-    #     if (( $letter == "i" )) ; then
-    #         echo "-$letter present and set to \"$inputFile\""
-    #     elif (( $letter == "o" )) ; then
-    #         echo "-$letter present and set to \"$outputFile\""
-    #     else
-    #         echo "-$letter present"
-    #     fi
-    # fi
+    if (( ${options[i]} == 1 )) ; then
+        if [[ $letter == "i" ]] ; then
+            echo "-i present and set to \"$inputFile\""
+        elif [[ $letter == "o" ]] ; then
+            echo "-o present and set to \"$outputFile\""
+        else
+            echo "-$letter present"
+        fi
+    fi
 done
 
 echo ""
