@@ -13,61 +13,14 @@ for i in {1..26}; do
 done
 
 # sprawdzenie obecnych flag opcji
+# i zaznaczenie tego w tablicy
 while getopts "qabcdefghijklmnoprstuvwxyz" flag; do
-    case ${flag} in
-        q) options[0]=1
-        ;;
-        a) options[1]=1
-        ;;
-        b) options[2]=1
-        ;;
-        c) options[3]=1
-        ;;
-        d) options[4]=1
-        ;;
-        e) options[5]=1
-        ;;
-        f) options[6]=1
-        ;;
-        g) options[7]=1
-        ;;
-        h) options[8]=1
-        ;;
-        i) options[9]=1
-        ;;
-        j) options[10]=1
-        ;;
-        k) options[11]=1
-        ;;
-        l) options[12]=1
-        ;;
-        m) options[13]=1
-        ;;
-        n) options[14]=1
-        ;;
-        o) options[15]=1
-        ;;
-        p) options[16]=1
-        ;;
-        r) options[17]=1
-        ;;
-        s) options[18]=1
-        ;;
-        t) options[19]=1
-        ;;
-        u) options[20]=1
-        ;;
-        v) options[21]=1
-        ;;
-        w) options[22]=1
-        ;;
-        x) options[23]=1
-        ;;
-        y) options[24]=1
-        ;;
-        z) options[25]=1
-        ;;
-    esac
+    if [[ $flag == "q" ]]; then
+        options[0]=1
+    else
+        index=$(( $(printf "%d" "'$flag") - 96 ))
+        options[$index]=1
+    fi
 done
 
 # wypisanie argumentow
