@@ -17,9 +17,9 @@ HELP=0
 MAX_DEPTH=1
 HASH_ALGO="md5"
 HARDLINKS_REPLACE=0
+DIR=""
 
-# sprawdzenie obecnych flag opcji
-# i zaznaczenie tego w tablicy
+# przetwarzanie flag opcji
 while true; do
     case "$1" in
         --help)
@@ -49,6 +49,7 @@ while true; do
   esac
 done
 
+# wydrukowanie help - opis uzycia programu
 if (( $HELP == 1 )) ; then
     echo "--------File duplicate remover--------"
     echo ""
@@ -66,3 +67,22 @@ if (( $HELP == 1 )) ; then
     echo ""
     exit 1
 fi
+
+# sprawdzamy czy zostal podany folder
+if (( $# < 1 )) ; then
+    echo "target directory was not set"
+    exit 2
+else
+    DIR=$1
+fi
+
+if (( ${DIR:-1} -neq "/" )) ; then
+    ((DIR+="/"))
+fi
+
+DIR_LIST=$( ls $DIR )
+
+for file in $DIR_LIST ; do
+    echo "$DIR$file"
+done
+
