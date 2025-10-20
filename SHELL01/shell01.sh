@@ -3,7 +3,7 @@
 #
 # 06.10.2025
 #
-# Zadanie SHELL01
+# Problem SHELL01
 set -e
 
 # granice przedzialu indeksow tabelki
