@@ -69,7 +69,7 @@ fi
 # jako nazwa pliku zostala wczytana flaga
 if [[ $inputFile == -* || $outputFile == -* ]] ; then
     echo "-i -o options require a filename"
-    exit 1
+    exit 3
 fi
 
 # wypisanie obecnych opcji

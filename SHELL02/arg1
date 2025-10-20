@@ -16,7 +16,7 @@ while getopts ":i:o:qabcdefghijklmnoprstuvwxyz" flag; do
         q)
             # jesli jest -q zakonczenie programu
             echo "Unsupported option: -q"
-            exit 1
+            exit 2
             ;;
         i)
             # jesli jest opcja -i zapamietujemy nazwe pliku
@@ -34,7 +34,7 @@ while getopts ":i:o:qabcdefghijklmnoprstuvwxyz" flag; do
         :)
             # brak nazwy pliku dla -i -o
             echo "-i -o options require a filename"
-            exit 1
+            exit 3
             ;;
     esac
 done
@@ -42,7 +42,7 @@ done
 # jako nazwa pliku zostala wczytana flaga
 if [[ $inputFile == -* || $outputFile == -* ]] ; then
     echo "-i -o options require a filename"
-    exit 1
+    exit 3
 fi
 
 # wypisanie obecnych opcji
