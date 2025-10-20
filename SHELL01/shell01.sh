@@ -21,6 +21,7 @@ else
     a=$1; b=$2
 fi
 
+# drukowanie tabelki
 # pierwszy wiersz tabeli - liczby od a do b
 printf "    "
 for i in $(seq $a $b) ; do
