@@ -11,9 +11,11 @@ set -e
 SHORT_OPTS=":i:o:qabcdefghijklmnoprstuvwxyz"
 LONG_OPTS="help"
 
-PARSED=$(getopt --options="$SHORT_OPTS" --longoptions="$LONG_OPTS" --name "$0" -- "$@") || exit 1
+PARSED=$(getopt --options="$SHORT_OPTS" --longoptions="$LONG_OPTS" --name "$0" -- "$@") || {
+    echo "-i -o options require a filename"
+    exit 3
+}
 eval set -- "$PARSED"
-
 
 options=($(printf '0 %.0s' {1..26}))
 inputFile=""
@@ -32,7 +34,7 @@ while true; do
             qPresent=1
             shift
             ;;
-        -i)
+        -i)            
             options[$(( $(printf "%d" "'i") - 97 ))]=1
             inputFile="$2"
             shift 2
@@ -87,12 +89,11 @@ for ((i = 0; i < 26; i++)); do
 done
 
 # wypisanie argumentow
-# argNum=$#
-# optNum=$OPTIND
-# if (( $((argNum - optNum + 1)) > 0 )) ; then
-#     echo "Arguments are:"
-#     for i in $(seq $optNum $argNum) ; do
-#         ind=$((i - optNum + 1))
-#         echo "\$${ind}=${!i}"
-#     done
-# fi
+if (( $# > 0 )); then
+    echo "Arguments are:"
+    ind=1
+    for arg in "$@"; do
+        echo "\$${ind}=$arg"
+        ((ind++))
+    done
+fi
