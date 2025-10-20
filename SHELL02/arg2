@@ -89,7 +89,7 @@ for ((i = 0; i < 26; i++)); do
 done
 
 # wypisanie argumentow
-if (( $# > 0 )); then
+if (( $# > 0 )) ; then
     echo "Arguments are:"
     ind=1
     for arg in "$@"; do
