@@ -6,3 +6,4 @@ Programy pisane w ramach laboratoriów z kursu *Języki Skryptowe* prowadzonych 
 ----------
 **SHELL01**: Podstawy basha: argumenty wywołania, zmienne, instrukcje warunkowe, pętle, echo i printf  
 **SHELL02**: Działania na opcjach, argumentach opcji i argumentach linii poleceń  
+**SHELL03**: Operacje na plikach; program szukajacy i usuwajacy duplikaty plikow w folderach  
