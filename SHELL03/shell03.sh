@@ -85,11 +85,5 @@ if [[ ! -d "$DIR" ]] ; then
     exit 3
 fi
 
-echo $DIR
-
 DIR_LIST=$( ls $DIR )
-
-for file in $DIR_LIST ; do
-    echo "$DIR$file"
-done
 
