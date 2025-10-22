@@ -60,7 +60,7 @@ if (( $HELP == 1 )) ; then
     echo " Usage:"
     echo " ./shell03.sh [--replace-with-hardlinks][--max-depth=N][--hash-algo=X] DIRNAME"
     echo ""
-    echo "    replace-with-hardlinks: Replaces duplicates with hardlinks instead of removing them."
+    echo "    replace-with-hardlinks: Replaces duplicates with hardlinks instead of removing."
     echo "    max-depth: Searches in subdirectories up to N directories deep."
     echo "    hash-algo: Uses specific hash function to compare files. Default is md5."
     echo ""
@@ -76,9 +76,16 @@ else
     DIR=$1
 fi
 
-if (( ${DIR:-1} -neq "/" )) ; then
-    ((DIR+="/"))
+if [[ "${DIR: -1}" != "/" ]] ; then
+    DIR="$DIR"/
 fi
+
+if [[ ! -d "$DIR" ]] ; then
+    echo "directory $DIR does not exist"
+    exit 3
+fi
+
+echo $DIR
 
 DIR_LIST=$( ls $DIR )
 
