@@ -6,6 +6,33 @@
 # Problem SHELL03
 set -e
 
+DIR_LIST=()
+
+function addDirectoryContents {
+    local currentDir=$1
+    local currentDepth=$2
+	
+    # ls
+    local currentList=()
+    currentList+=$(ls -p $currentDir)
+    # ls dodajemy do listy
+    for thing in $currentList ; do
+    	DIR_LIST+="$currentDir$thing "
+    done
+    
+    # konczymy jesli jestesmy na najnizszym poziomie
+    if (( currentDepth <= 1 )) ; then
+    	return 0
+    fi
+    
+    # w przeciwnym wypadku dodajemy rekurencyjnie rzeczy w podfolderach
+    for thing in $currentList ; do
+    	if [[ -d "$currentDir$thing" ]] ; then
+            addDirectoryContents "$currentDir$thing" $(( currentDepth - 1 ))
+        fi
+	done
+}
+
 # parsowanie opcji
 SHORT_OPTS=""
 LONG_OPTS="replace-with-hardlinks help max-depth: hash-algo:"
@@ -60,7 +87,7 @@ if (( $HELP == 1 )) ; then
     echo " Usage:"
     echo " ./shell03.sh [--replace-with-hardlinks][--max-depth=N][--hash-algo=X] DIRNAME"
     echo ""
-    echo "    replace-with-hardlinks: Replaces duplicates with hardlinks instead of removing them."
+    echo "    replace-with-hardlinks: Replaces duplicates with hardlinks instead of removing."
     echo "    max-depth: Searches in subdirectories up to N directories deep."
     echo "    hash-algo: Uses specific hash function to compare files. Default is md5."
     echo ""
@@ -68,7 +95,7 @@ if (( $HELP == 1 )) ; then
     exit 1
 fi
 
-# sprawdzamy czy zostal podany folder
+# sprawdzam czy zostal podany folder
 if (( $# < 1 )) ; then
     echo "target directory was not set"
     exit 2
@@ -76,18 +103,37 @@ else
     DIR=$1
 fi
 
+# dodaje / na koncu nazwy folderu
 if [[ ${DIR: -1} != "/" ]] ; then
     DIR="$DIR"/
 fi
 
+# sprawdzam czy podany folder istnieje
 if [[ ! -d "$DIR" ]] ; then
     echo "$DIR does not exist or is not a directory"
     exit 3
 fi
 
-DIR_LIST=$( ls $DIR )
+# dodajemy do DIR_LIST wszystko w folderze 
+# oraz podfolderach do MAX_DEPTH poziomow w dol
+addDirectoryContents $DIR $MAX_DEPTH
 
-for file in $DIR_LIST ; do
-    echo "$DIR$file"
+# lista wszystkich plikow do przetworzenia
+FILE_LIST=()
+# wpisanie do listy tylko plikow
+for thing in $DIR_LIST ; do
+    if [[ ! -d "$thing" ]] ; then
+    	FILE_LIST+="$thing "
+    fi
 done
 
+for file in $FILE_LIST ; do
+    echo $file
+done
+
+echo ""
+echo ""
+
+for file in $FILE_LIST; do
+    echo "$(stat -c%s "$file") $file"
+done | sort -n
