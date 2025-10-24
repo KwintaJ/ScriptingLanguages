@@ -76,8 +76,13 @@ else
     DIR=$1
 fi
 
-if (( ${DIR:-1} -neq "/" )) ; then
-    ((DIR+="/"))
+if [[ ${DIR: -1} != "/" ]] ; then
+    DIR="$DIR"/
+fi
+
+if [[ ! -d "$DIR" ]] ; then
+    echo "$DIR does not exist or is not a directory"
+    exit 3
 fi
 
 DIR_LIST=$( ls $DIR )
