@@ -1,14 +1,61 @@
 #!/bin/bash 
 # Jan Kwinta
 #
-# 20.10.2025
+# 24.10.2025
 #
 # Problem SHELL03
 set -e
 
-DIR_LIST=()
 
-function addDirectoryContents {
+
+########################################################################
+# ZMIENNE GLOBALNE
+
+# dozwolone flagi opcji
+SHORT_OPTS=""
+LONG_OPTS="replace-with-hardlinks help max-depth: hash-algo:"
+# opcje 
+HELP=0
+MAX_DEPTH=1
+HASH_ALGO="md5"
+HARDLINKS_REPLACE=0
+# jedyny argument - docelowy folder
+DIR=""
+# listy z zawartoscia folderu DIR
+DIR_LIST=()    # wszystkie rzeczy w folderze
+FILE_LIST=()   # wszystkie pliki w folderze
+# zmienne do raportu
+processedFiles=0
+duplicatesFound=0
+filesRemoved=0
+
+
+
+########################################################################
+# FUNKCJE
+
+# wypisuje help - opis uzycia skryptu
+printHelp () {
+	echo "--------File duplicate remover--------"
+    echo ""
+    echo "    Use this script to search a directory for"
+    echo "    file duplicates and remove any if found."
+    echo ""
+    echo ""
+    echo " Usage:"
+    echo " ./shell03.sh [--replace-with-hardlinks][--max-depth=N][--hash-algo=X] DIRNAME"
+    echo ""
+    echo "    replace-with-hardlinks: Replaces duplicates with hardlinks instead of removing."
+    echo "    max-depth: Searches in subdirectories up to N directories deep."
+    echo "    hash-algo: Uses specific hash function to compare files. Default is md5."
+    echo ""
+    echo ""
+}
+
+# funkcja dodaje do DIR_LIST wszystko w folderze
+# $1 - nazwa folderu, ktorego zawartosc funkcja ma dodac do listy
+# $2 - w ile jeszcze poziomow podfolderow funkcja ma wejsc
+addDirectoryContents () {
     local currentDir=$1
     local currentDepth=$2
 	
@@ -33,18 +80,30 @@ function addDirectoryContents {
 	done
 }
 
-# parsowanie opcji
-SHORT_OPTS=""
-LONG_OPTS="replace-with-hardlinks help max-depth: hash-algo:"
+# funkcja kopiuje z DIR_LIST do FILE_LIST tylko nazwy plikow
+# (nie foldery) i sortuje je wzgledem rozmiaru
+filterAndSortFiles () {
+    # wpisanie do FILE_LIST plikow
+    for thing in $DIR_LIST ; do
+        if [[ ! -d "$thing" ]] ; then
+            FILE_LIST+="$thing "
+        fi
+    done
 
+    # posortowanie FILE_LIST po rozmiarze
+    FILE_LIST=$(for f in $FILE_LIST; do
+        echo "$(stat -c%s "$f") $f"
+    done | sort -n | awk '{print $2}')
+}
+
+
+
+########################################################################
+# MAIN
+
+# sprawdzenie ktore flagi opcji zostaly uzyte przy uruchomieniu skryptu
 PARSED=$(getopt --options="$SHORT_OPTS" --longoptions="$LONG_OPTS" --name "$0" -- "$@") || exit 2
 eval set -- "$PARSED"
-
-HELP=0
-MAX_DEPTH=1
-HASH_ALGO="md5"
-HARDLINKS_REPLACE=0
-DIR=""
 
 # przetwarzanie flag opcji
 while true; do
@@ -78,24 +137,11 @@ done
 
 # wydrukowanie help - opis uzycia programu
 if (( $HELP == 1 )) ; then
-    echo "--------File duplicate remover--------"
-    echo ""
-    echo "    Use this script to search a directory for"
-    echo "    file duplicates and remove any if found."
-    echo ""
-    echo ""
-    echo " Usage:"
-    echo " ./shell03.sh [--replace-with-hardlinks][--max-depth=N][--hash-algo=X] DIRNAME"
-    echo ""
-    echo "    replace-with-hardlinks: Replaces duplicates with hardlinks instead of removing."
-    echo "    max-depth: Searches in subdirectories up to N directories deep."
-    echo "    hash-algo: Uses specific hash function to compare files. Default is md5."
-    echo ""
-    echo ""
+    printHelp
     exit 1
 fi
 
-# sprawdzam czy zostal podany folder
+# sprawdzenie czy zostal podany folder
 if (( $# < 1 )) ; then
     echo "target directory was not set"
     exit 2
@@ -103,37 +149,24 @@ else
     DIR=$1
 fi
 
-# dodaje / na koncu nazwy folderu
+# jesli nie ma dodanie / na koncu nazwy folderu
 if [[ ${DIR: -1} != "/" ]] ; then
     DIR="$DIR"/
 fi
 
-# sprawdzam czy podany folder istnieje
+# sprawdzenie czy podany folder istnieje
 if [[ ! -d "$DIR" ]] ; then
     echo "$DIR does not exist or is not a directory"
     exit 3
 fi
 
-# dodajemy do DIR_LIST wszystko w folderze 
-# oraz podfolderach do MAX_DEPTH poziomow w dol
+# stworzenie DIR_LIST
 addDirectoryContents $DIR $MAX_DEPTH
 
-# lista wszystkich plikow do przetworzenia
-FILE_LIST=()
-# wpisanie do listy tylko plikow
-for thing in $DIR_LIST ; do
-    if [[ ! -d "$thing" ]] ; then
-    	FILE_LIST+="$thing "
-    fi
-done
+# stworzenie FILE_LIST
+filterAndSortFiles
 
-for file in $FILE_LIST ; do
-    echo $file
-done
-
-echo ""
-echo ""
-
+# DEBUG wypisanie FILE_LIST 
 for file in $FILE_LIST; do
     echo "$(stat -c%s "$file") $file"
-done | sort -n
+done
