@@ -87,6 +87,7 @@ filterAndSortFiles () {
     for thing in $DIR_LIST ; do
         if [[ ! -d "$thing" ]] ; then
             FILE_LIST+="$thing "
+            ((processedFiles += 1))
         fi
     done
 
@@ -96,6 +97,12 @@ filterAndSortFiles () {
     done | sort -n | awk '{print $2}')
 }
 
+# wydrukowanie raportu
+printReport () {
+	echo "Liczba przetworzonych plikow: $processedFiles"
+    echo "Liczba znalezionych duplikatow: $duplicatesFound"
+    echo "Liczba zastapionych duplikatow: $filesRemoved"
+}
 
 
 ########################################################################
@@ -170,3 +177,6 @@ filterAndSortFiles
 for file in $FILE_LIST; do
     echo "$(stat -c%s "$file") $file"
 done
+
+# wydrukowanie raportu koncowego
+printReport
