@@ -66,7 +66,7 @@ addDirectoryContents () {
     currentList+=$(ls -p $currentDir)
     # ls dodajemy do listy
     for thing in $currentList ; do
-        DIR_LIST+="$currentDir$thing "
+        DIR_LIST+=("$currentDir$thing")
     done
     
     # konczymy jesli jestesmy na najnizszym poziomie
@@ -86,15 +86,15 @@ addDirectoryContents () {
 # (nie foldery) i sortuje je wzgledem rozmiaru
 filterAndSortFiles () {
     # wpisanie do FILE_LIST plikow
-    for thing in $DIR_LIST ; do
+    for thing in ${DIR_LIST[@]} ; do
         if [[ ! -d "$thing" ]] ; then
-            FILE_LIST+="$thing "
+            FILE_LIST+=("$thing")
             ((processedFiles += 1))
         fi
     done
 
     # posortowanie FILE_LIST po rozmiarze
-    FILE_LIST=$(for file in $FILE_LIST ; do
+    FILE_LIST=$(for file in ${FILE_LIST[@]} ; do
         echo "$(stat -f%z "$file") $file"
     done | sort -n | awk '{print $2}')
 }
@@ -105,7 +105,7 @@ compareFiles () {
     local duplicateListSize=$1
 
     echo "potential $duplicateListSize duplicates"
-    for file in $DUPLICATE_LIST ; do
+    for file in ${DUPLICATE_LIST[@]} ; do
         echo $file
     done
     echo "" 
@@ -129,7 +129,7 @@ findAndRemoveDuplicates () {
             currentSize=$fileSize
         fi
 
-        DUPLICATE_LIST+="$file "
+        DUPLICATE_LIST+=("$file")
         ((currentDuplicates += 1))
     done
 }
