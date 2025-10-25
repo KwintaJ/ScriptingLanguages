@@ -36,7 +36,7 @@ filesRemoved=0
 
 # wypisuje help - opis uzycia skryptu
 printHelp () {
-	echo "--------File duplicate remover--------"
+    echo "--------File duplicate remover--------"
     echo ""
     echo "    Use this script to search a directory for"
     echo "    file duplicates and remove any if found."
@@ -58,26 +58,26 @@ printHelp () {
 addDirectoryContents () {
     local currentDir=$1
     local currentDepth=$2
-	
+    
     # ls
     local currentList=()
     currentList+=$(ls -p $currentDir)
     # ls dodajemy do listy
     for thing in $currentList ; do
-    	DIR_LIST+="$currentDir$thing "
+        DIR_LIST+="$currentDir$thing "
     done
     
     # konczymy jesli jestesmy na najnizszym poziomie
     if (( currentDepth <= 1 )) ; then
-    	return 0
+        return 0
     fi
     
     # w przeciwnym wypadku dodajemy rekurencyjnie rzeczy w podfolderach
     for thing in $currentList ; do
-    	if [[ -d "$currentDir$thing" ]] ; then
+        if [[ -d "$currentDir$thing" ]] ; then
             addDirectoryContents "$currentDir$thing" $(( currentDepth - 1 ))
         fi
-	done
+    done
 }
 
 # funkcja kopiuje z DIR_LIST do FILE_LIST tylko nazwy plikow
@@ -99,7 +99,7 @@ filterAndSortFiles () {
 
 # wydrukowanie raportu
 printReport () {
-	echo "Liczba przetworzonych plikow: $processedFiles"
+    echo "Liczba przetworzonych plikow: $processedFiles"
     echo "Liczba znalezionych duplikatow: $duplicatesFound"
     echo "Liczba zastapionych duplikatow: $filesRemoved"
 }
@@ -144,20 +144,7 @@ done
 
 # wydrukowanie help - opis uzycia programu
 if (( $HELP == 1 )) ; then
-    echo "--------File duplicate remover--------"
-    echo ""
-    echo "    Use this script to search a directory for"
-    echo "    file duplicates and remove any if found."
-    echo ""
-    echo ""
-    echo " Usage:"
-    echo " ./shell03.sh [--replace-with-hardlinks][--max-depth=N][--hash-algo=X] DIRNAME"
-    echo ""
-    echo "    replace-with-hardlinks: Replaces duplicates with hardlinks instead of removing."
-    echo "    max-depth: Searches in subdirectories up to N directories deep."
-    echo "    hash-algo: Uses specific hash function to compare files. Default is md5."
-    echo ""
-    echo ""
+    printHelp
     exit 1
 fi
 
@@ -169,16 +156,27 @@ else
     DIR=$1
 fi
 
-if [[ "${DIR: -1}" != "/" ]] ; then
+# jesli nie ma dodanie / na koncu nazwy folderu
+if [[ ${DIR: -1} != "/" ]] ; then
     DIR="$DIR"/
 fi
 
+# sprawdzenie czy podany folder istnieje
 if [[ ! -d "$DIR" ]] ; then
-    echo "directory $DIR does not exist"
+    echo "$DIR does not exist or is not a directory"
     exit 3
 fi
 
-DIR_LIST=$( ls $DIR )
+# stworzenie DIR_LIST
+addDirectoryContents $DIR $MAX_DEPTH
+
+# stworzenie FILE_LIST
+filterAndSortFiles
+
+# DEBUG wypisanie FILE_LIST 
+for file in $FILE_LIST; do
+    echo "$(stat -c%s "$file") $file"
+done
 
 # wydrukowanie raportu koncowego
 printReport
