@@ -24,6 +24,8 @@ DIR=""
 # listy z zawartoscia folderu DIR
 DIR_LIST=()    # wszystkie rzeczy w folderze
 FILE_LIST=()   # wszystkie pliki w folderze
+# zmienne operacyjne
+DUPLICATE_LIST=()
 # zmienne do raportu
 processedFiles=0
 duplicatesFound=0
@@ -92,9 +94,44 @@ filterAndSortFiles () {
     done
 
     # posortowanie FILE_LIST po rozmiarze
-    FILE_LIST=$(for f in $FILE_LIST; do
-        echo "$(stat -c%s "$f") $f"
+    FILE_LIST=$(for file in $FILE_LIST ; do
+        echo "$(stat -f%z "$file") $file"
     done | sort -n | awk '{print $2}')
+}
+
+# funkcja porownuje $1 plikow z DUPLICATE_LIST
+# oraz usuwa/podmienia duplikaty 
+compareFiles () {
+    local duplicateListSize=$1
+
+    echo "potential $duplicateListSize duplicates"
+    for file in $DUPLICATE_LIST ; do
+        echo $file
+    done
+    echo "" 
+}
+
+# funkcja iteruje sie po FILE_LIST szukajac plikow o
+# takiej samej wielkosci i wywoluje compareFilesFrom
+findAndRemoveDuplicates () {
+    local currentSize=-1
+    local currentDuplicates=0
+
+    for file in $FILE_LIST ; do
+        local fileSize=$(stat -f%z "$file")
+        
+        if (( fileSize > currentSize )) ; then
+            if (( currentDuplicates > 1 )) ; then
+                compareFiles $currentDuplicates
+            fi
+            DUPLICATE_LIST=()
+            currentDuplicates=0
+            currentSize=$fileSize
+        fi
+
+        DUPLICATE_LIST+="$file "
+        ((currentDuplicates += 1))
+    done
 }
 
 # wydrukowanie raportu
@@ -113,7 +150,7 @@ PARSED=$(getopt --options="$SHORT_OPTS" --longoptions="$LONG_OPTS" --name "$0" -
 eval set -- "$PARSED"
 
 # przetwarzanie flag opcji
-while true; do
+while true ; do
     case "$1" in
         --help)
             HELP=1
@@ -173,10 +210,8 @@ addDirectoryContents $DIR $MAX_DEPTH
 # stworzenie FILE_LIST
 filterAndSortFiles
 
-# DEBUG wypisanie FILE_LIST 
-for file in $FILE_LIST; do
-    echo "$(stat -c%s "$file") $file"
-done
+# porownanie plikow na FILE_LIST i usuniecie duplikatow
+findAndRemoveDuplicates
 
 # wydrukowanie raportu koncowego
 printReport
