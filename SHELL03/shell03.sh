@@ -1,23 +1,116 @@
 #!/bin/bash 
 # Jan Kwinta
 #
-# 20.10.2025
+# 24.10.2025
 #
 # Problem SHELL03
 set -e
 
-# parsowanie opcji
+
+
+########################################################################
+# ZMIENNE GLOBALNE
+
+# dozwolone flagi opcji
 SHORT_OPTS=""
 LONG_OPTS="replace-with-hardlinks help max-depth: hash-algo:"
-
-PARSED=$(getopt --options="$SHORT_OPTS" --longoptions="$LONG_OPTS" --name "$0" -- "$@") || exit 2
-eval set -- "$PARSED"
-
+# opcje 
 HELP=0
 MAX_DEPTH=1
 HASH_ALGO="md5"
 HARDLINKS_REPLACE=0
+# jedyny argument - docelowy folder
 DIR=""
+# listy z zawartoscia folderu DIR
+DIR_LIST=()    # wszystkie rzeczy w folderze
+FILE_LIST=()   # wszystkie pliki w folderze
+# zmienne do raportu
+processedFiles=0
+duplicatesFound=0
+filesRemoved=0
+
+
+
+########################################################################
+# FUNKCJE
+
+# wypisuje help - opis uzycia skryptu
+printHelp () {
+	echo "--------File duplicate remover--------"
+    echo ""
+    echo "    Use this script to search a directory for"
+    echo "    file duplicates and remove any if found."
+    echo ""
+    echo ""
+    echo " Usage:"
+    echo " ./shell03.sh [--replace-with-hardlinks][--max-depth=N][--hash-algo=X] DIRNAME"
+    echo ""
+    echo "    replace-with-hardlinks: Replaces duplicates with hardlinks instead of removing."
+    echo "    max-depth: Searches in subdirectories up to N directories deep."
+    echo "    hash-algo: Uses specific hash function to compare files. Default is md5."
+    echo ""
+    echo ""
+}
+
+# funkcja dodaje do DIR_LIST wszystko w folderze
+# $1 - nazwa folderu, ktorego zawartosc funkcja ma dodac do listy
+# $2 - w ile jeszcze poziomow podfolderow funkcja ma wejsc
+addDirectoryContents () {
+    local currentDir=$1
+    local currentDepth=$2
+	
+    # ls
+    local currentList=()
+    currentList+=$(ls -p $currentDir)
+    # ls dodajemy do listy
+    for thing in $currentList ; do
+    	DIR_LIST+="$currentDir$thing "
+    done
+    
+    # konczymy jesli jestesmy na najnizszym poziomie
+    if (( currentDepth <= 1 )) ; then
+    	return 0
+    fi
+    
+    # w przeciwnym wypadku dodajemy rekurencyjnie rzeczy w podfolderach
+    for thing in $currentList ; do
+    	if [[ -d "$currentDir$thing" ]] ; then
+            addDirectoryContents "$currentDir$thing" $(( currentDepth - 1 ))
+        fi
+	done
+}
+
+# funkcja kopiuje z DIR_LIST do FILE_LIST tylko nazwy plikow
+# (nie foldery) i sortuje je wzgledem rozmiaru
+filterAndSortFiles () {
+    # wpisanie do FILE_LIST plikow
+    for thing in $DIR_LIST ; do
+        if [[ ! -d "$thing" ]] ; then
+            FILE_LIST+="$thing "
+            ((processedFiles += 1))
+        fi
+    done
+
+    # posortowanie FILE_LIST po rozmiarze
+    FILE_LIST=$(for f in $FILE_LIST; do
+        echo "$(stat -c%s "$f") $f"
+    done | sort -n | awk '{print $2}')
+}
+
+# wydrukowanie raportu
+printReport () {
+	echo "Liczba przetworzonych plikow: $processedFiles"
+    echo "Liczba znalezionych duplikatow: $duplicatesFound"
+    echo "Liczba zastapionych duplikatow: $filesRemoved"
+}
+
+
+########################################################################
+# MAIN
+
+# sprawdzenie ktore flagi opcji zostaly uzyte przy uruchomieniu skryptu
+PARSED=$(getopt --options="$SHORT_OPTS" --longoptions="$LONG_OPTS" --name "$0" -- "$@") || exit 2
+eval set -- "$PARSED"
 
 # przetwarzanie flag opcji
 while true; do
@@ -68,7 +161,7 @@ if (( $HELP == 1 )) ; then
     exit 1
 fi
 
-# sprawdzamy czy zostal podany folder
+# sprawdzenie czy zostal podany folder
 if (( $# < 1 )) ; then
     echo "target directory was not set"
     exit 2
@@ -87,3 +180,5 @@ fi
 
 DIR_LIST=$( ls $DIR )
 
+# wydrukowanie raportu koncowego
+printReport
