@@ -89,7 +89,7 @@ filterAndSortFiles () {
     for thing in ${DIR_LIST[@]} ; do
         if [[ ! -d "$thing" ]] ; then
             FILE_LIST+=("$thing")
-            ((processedFiles += 1))
+            (( processedFiles += 1 ))
         fi
     done
 
@@ -103,12 +103,36 @@ filterAndSortFiles () {
 # oraz usuwa/podmienia duplikaty 
 compareFiles () {
     local duplicateListSize=$1
-
-    echo "potential $duplicateListSize duplicates"
-    for file in ${DUPLICATE_LIST[@]} ; do
-        echo $file
+    local alreadyRemoved=()
+    for (( i=0 ; i < $duplicateListSize ; i++ )) ; do
+        alreadyRemoved[i]=0
     done
-    echo "" 
+
+    # debug
+    # echo "potential $duplicateListSize duplicates"
+    # for (( i=0 ; i < $duplicateListSize ; i++)) ; do
+    #     echo ${DUPLICATE_LIST[i]}
+    # done
+    # echo ""
+
+    for (( i=0 ; i < $duplicateListSize ; i++ )) ; do
+        for (( j=$i + 1 ; j < $duplicateListSize ; j++ )) ; do
+            if (( alreadyRemoved[i] == 1 )) ; then
+                continue 2
+            elif (( alreadyRemoved[j] == 1 )) ; then
+                continue
+            fi
+
+            local hash1=$(md5sum "${DUPLICATE_LIST[i]}" | awk '{print $1}')
+            local hash2=$(md5sum "${DUPLICATE_LIST[j]}" | awk '{print $1}')
+            if [[ "$hash1" == "$hash2" ]] ; then
+                (( duplicatesFound += 1 ))
+                alreadyRemoved[j]=1
+                echo "remove ${DUPLICATE_LIST[j]}"
+            fi
+        done
+    done
+
 }
 
 # funkcja iteruje sie po FILE_LIST szukajac plikow o
@@ -130,7 +154,7 @@ findAndRemoveDuplicates () {
         fi
 
         DUPLICATE_LIST+=("$file")
-        ((currentDuplicates += 1))
+        (( currentDuplicates += 1 ))
     done
 }
 
