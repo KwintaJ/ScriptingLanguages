@@ -124,8 +124,8 @@ compareFiles () {
                 continue
             fi
 
-            local hash1=$(md5sum "${DUPLICATE_LIST[i]}" | awk '{print $1}')
-            local hash2=$(md5sum "${DUPLICATE_LIST[j]}" | awk '{print $1}')
+            local hash1=$("$HASH_ALGO"sum "${DUPLICATE_LIST[i]}" | awk '{print $1}')
+            local hash2=$("$HASH_ALGO"sum "${DUPLICATE_LIST[j]}" | awk '{print $1}')
             if [[ "$hash1" == "$hash2" ]] ; then
                 if cmp -s "${DUPLICATE_LIST[i]}" "${DUPLICATE_LIST[j]}" ; then
                     (( duplicatesFound += 1 ))
