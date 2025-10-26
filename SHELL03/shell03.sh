@@ -65,7 +65,7 @@ findAndSortFiles () {
     # stworzenie pliku tymczasowego i wpisanie do niego 
     # wyniku polecenia find
     tempFile=$(mktemp ./tmp01XXXXXX)  
-    find $DIR  -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+    find $DIR  -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -c '%s %n' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
 
     # wypelnienie FILE_LIST
     while IFS= read -r file; do
