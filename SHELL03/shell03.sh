@@ -86,8 +86,8 @@ removeDuplicates () {
     for (( k=0 ; k < ${#FILE_LIST[@]} ; k++ )) ; do
         local fileSize=$(stat -f%z "${FILE_LIST[k]}")
         
-        if (( fileSize > currentSize )) ; then
-            if (( currentDuplicates > 1 )) ; then
+        if [[ $fileSize > $currentSize ]] ; then
+            if [[ $currentDuplicates > 1 ]] ; then
                 compareFiles
             fi
             DUPLICATE_LIST=()
@@ -109,9 +109,9 @@ compareFiles () {
 
     for (( i=0 ; i < ${#DUPLICATE_LIST[@]} ; i++ )) ; do
         for (( j=$i + 1 ; j < ${#DUPLICATE_LIST[@]} ; j++ )) ; do
-            if (( alreadyRemoved[i] == 1 )) ; then
+            if [[ ${alreadyRemoved[i]} == 1 ]] ; then
                 continue 2
-            elif (( alreadyRemoved[j] == 1 )) ; then
+            elif [[ ${alreadyRemoved[j]} == 1 ]] ; then
                 continue
             fi
 
@@ -134,7 +134,7 @@ removeFile () {
     file=$1
     aliasFile=$2
 
-    if (( $HARDLINKS_REPLACE == 1 )) ; then
+    if [[ $HARDLINKS_REPLACE == 1 ]] ; then
         echo "replace $file with link to $aliasFile"
     else
         echo "remove $file"
@@ -187,13 +187,13 @@ while true ; do
 done
 
 # wydrukowanie help - opis uzycia programu
-if (( $HELP == 1 )) ; then
+if [[ $HELP == 1 ]] ; then
     printHelp
     exit 1
 fi
 
 # sprawdzenie czy zostal podany folder
-if (( $# < 1 )) ; then
+if [[ $# < 1 ]] ; then
     echo "target directory was not set"
     exit 2
 else
