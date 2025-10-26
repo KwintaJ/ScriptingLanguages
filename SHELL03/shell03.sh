@@ -17,7 +17,7 @@ LONG_OPTS="replace-with-hardlinks help max-depth: hash-algo:"
 
 # opcje i ich domyslne wartosci
 HELP=0
-MAX_DEPTH=1
+MAX_DEPTH=-1
 HASH_ALGO="md5"
 HARDLINKS_REPLACE=0
 
@@ -64,8 +64,12 @@ findAndSortFiles () {
     
     # stworzenie pliku tymczasowego i wpisanie do niego 
     # wyniku polecenia find
-    tempFile=$(mktemp ./tmp01XXXXXX)  
-    find $DIR  -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -c '%s %n' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+    tempFile=$(mktemp ./tmp01XXXXXX)
+    if [[ $MAX_DEPTH == -1 ]] ; then 
+        find $DIR -type f -print0 | xargs -0 stat -c '%s %n' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+    else
+        find $DIR -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -c '%s %n' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+    fi
 
     # wypelnienie FILE_LIST
     while IFS= read -r file; do
