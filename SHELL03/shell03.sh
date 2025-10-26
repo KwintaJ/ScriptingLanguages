@@ -95,7 +95,7 @@ removeDuplicates () {
     local currentDuplicates=0
 
     for (( k=0 ; k < ${#FILE_LIST[@]} ; k++ )) ; do
-        local fileSize=$(stat -f%z "${FILE_LIST[k]}")
+        local fileSize=$(stat -c%s "${FILE_LIST[k]}")
 
         # dodawanie do listy DUPLICATE_LIST dopoki maja takie same rozmiary
         if [[ $fileSize > $currentSize ]] ; then
