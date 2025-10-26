@@ -12,13 +12,13 @@ for (( i=1 ; i < 6 ; i++ )) ; do
             for (( l=1 ; l < 6 ; l++ )) ; do
                 mkdir -p DIR0$i/DIR1$j/DIR2$k/DIR3$l
                 touch DIR0$i/DIR1$j/DIR2$k/DIR3$l/$i$j$k$l.txt
-                echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa$j$k" > DIR0$i/DIR1$j/DIR2$k/DIR3$l/$i$j$k$l.txt
+                echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa$j$k" > DIR0$i/DIR1$j/DIR2$k/DIR3$l/$i$j$k$l.txt
             done
             touch DIR0$i/DIR1$j/DIR2$k/$i$j$k.txt
-            echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa$i$j" > DIR0$i/DIR1$j/DIR2$k/$i$j$k.txt
+            echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa$i$j" > DIR0$i/DIR1$j/DIR2$k/$i$j$k.txt
         done
         touch DIR0$i/DIR1$j/$i$j.txt
-        echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa$i" > DIR0$i/DIR1$j/$i$j.txt
+        echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa$i" > DIR0$i/DIR1$j/$i$j.txt
     done
     touch DIR0$i/$i.txt
     echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa123" > DIR0$i/$i.txt
