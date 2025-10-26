@@ -54,52 +54,39 @@ printHelp () {
 }
 
 # funkcja przeszukuje drzewo folderow, tworzy liste plikow
-# i sortuje liste wzgledem rozmiaru plikow
+# posortowana wzgledem rozmiaru
 findAndSortFiles () {
     # wpisanie do FILE_LIST tylko plikow z podanego folderu
     # oraz poddfolderow do MAX_DEPTH poziomow w dol
     
     # stworzenie pliku tymczasowego i wpisanie do niego 
     # wyniku polecenia find
-	tempFile=$(mktemp ./tmp01XXXXXX)  
-    find $DIR -type f -print0 -maxdepth $MAX_DEPTH > $tempFile
-    
+    tempFile=$(mktemp ./tmp01XXXXXX)  
+    find .  -maxdepth 3 -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+
     # wypelnienie FILE_LIST
-    while IFS= read -r -d '' file ; do
-        if [[ "$file" == "$tempFile" ]] ; then
-            continue
-        fi
-		FILE_LIST+=("$file")
+    while IFS= read -r file; do
+        # pomiń plik tymczasowy
+        [[ "$file" == "$tempFile" ]] && continue
+
+        FILE_LIST+=("$file")
         (( processedFiles += 1 ))
-	done < $tempFile
+    done < "$tempFile"
     
     # usuniecie pliku tymczasowego
     rm $tempFile
-    
-    # posortowanie FILE_LIST po rozmiarze
-    FILE_LIST=$(for file in ${FILE_LIST[@]} ; do
-        echo "$(stat -f%z "$file") $file"
-    done | sort -n | awk '{print $2}')
 }
 
 # funkcja porownuje $1 plikow z DUPLICATE_LIST
 # oraz usuwa/podmienia duplikaty 
 compareFiles () {
-    local duplicateListSize=$1
     local alreadyRemoved=()
-    for (( i=0 ; i < $duplicateListSize ; i++ )) ; do
+    for (( i=0 ; i < ${#DUPLICATE_LIST[@]} ; i++ )) ; do
         alreadyRemoved[i]=0
     done
 
-    # debug
-    # echo "potential $duplicateListSize duplicates"
-    # for (( i=0 ; i < $duplicateListSize ; i++)) ; do
-    #     echo ${DUPLICATE_LIST[i]}
-    # done
-    # echo ""
-
-    for (( i=0 ; i < $duplicateListSize ; i++ )) ; do
-        for (( j=$i + 1 ; j < $duplicateListSize ; j++ )) ; do
+    for (( i=0 ; i < ${#DUPLICATE_LIST[@]} ; i++ )) ; do
+        for (( j=$i + 1 ; j < ${#DUPLICATE_LIST[@]} ; j++ )) ; do
             if (( alreadyRemoved[i] == 1 )) ; then
                 continue 2
             elif (( alreadyRemoved[j] == 1 )) ; then
@@ -111,11 +98,10 @@ compareFiles () {
             if [[ "$hash1" == "$hash2" ]] ; then
                 (( duplicatesFound += 1 ))
                 alreadyRemoved[j]=1
-                echo "remove ${DUPLICATE_LIST[j]}"
+                echo "    remove "${DUPLICATE_LIST[j]}""
             fi
         done
     done
-
 }
 
 # funkcja iteruje sie po FILE_LIST szukajac plikow o
@@ -124,19 +110,18 @@ findAndRemoveDuplicates () {
     local currentSize=-1
     local currentDuplicates=0
 
-    for file in $FILE_LIST ; do
-        local fileSize=$(stat -f%z "$file")
+    for (( k=0 ; k < ${#FILE_LIST[@]} ; k++ )) ; do
+        local fileSize=$(stat -f%z "${FILE_LIST[k]}")
         
         if (( fileSize > currentSize )) ; then
             if (( currentDuplicates > 1 )) ; then
-                compareFiles $currentDuplicates
+                compareFiles
             fi
             DUPLICATE_LIST=()
             currentDuplicates=0
             currentSize=$fileSize
         fi
-
-        DUPLICATE_LIST+=("$file")
+        DUPLICATE_LIST+=("${FILE_LIST[k]}")
         (( currentDuplicates += 1 ))
     done
 }
