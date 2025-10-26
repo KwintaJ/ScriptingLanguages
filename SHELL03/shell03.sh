@@ -77,6 +77,28 @@ findAndSortFiles () {
     rm $tempFile
 }
 
+# funkcja iteruje sie po FILE_LIST szukajac plikow o
+# takiej samej wielkosci i wywoluje compareFiles
+removeDuplicates () {
+    local currentSize=-1
+    local currentDuplicates=0
+
+    for (( k=0 ; k < ${#FILE_LIST[@]} ; k++ )) ; do
+        local fileSize=$(stat -f%z "${FILE_LIST[k]}")
+        
+        if (( fileSize > currentSize )) ; then
+            if (( currentDuplicates > 1 )) ; then
+                compareFiles
+            fi
+            DUPLICATE_LIST=()
+            currentDuplicates=0
+            currentSize=$fileSize
+        fi
+        DUPLICATE_LIST+=("${FILE_LIST[k]}")
+        (( currentDuplicates += 1 ))
+    done
+}
+
 # funkcja porownuje $1 plikow z DUPLICATE_LIST
 # oraz usuwa/podmienia duplikaty 
 compareFiles () {
@@ -96,34 +118,27 @@ compareFiles () {
             local hash1=$(md5sum "${DUPLICATE_LIST[i]}" | awk '{print $1}')
             local hash2=$(md5sum "${DUPLICATE_LIST[j]}" | awk '{print $1}')
             if [[ "$hash1" == "$hash2" ]] ; then
-                (( duplicatesFound += 1 ))
-                alreadyRemoved[j]=1
-                echo "    remove "${DUPLICATE_LIST[j]}""
+                if cmp -s "${DUPLICATE_LIST[i]}" "${DUPLICATE_LIST[j]}" ; then
+                    (( duplicatesFound += 1 ))
+                    alreadyRemoved[j]=1
+                    removeFile "${DUPLICATE_LIST[j]}" "${DUPLICATE_LIST[i]}"
+                fi
             fi
         done
     done
 }
 
-# funkcja iteruje sie po FILE_LIST szukajac plikow o
-# takiej samej wielkosci i wywoluje compareFilesFrom
-findAndRemoveDuplicates () {
-    local currentSize=-1
-    local currentDuplicates=0
+# funkcja usuwa plik $1 lub jesli podniesiona jest flaga
+# HARDLINKS_REPLACE to zastepuje go hardlinkiem do $2
+removeFile () {
+    file=$1
+    aliasFile=$2
 
-    for (( k=0 ; k < ${#FILE_LIST[@]} ; k++ )) ; do
-        local fileSize=$(stat -f%z "${FILE_LIST[k]}")
-        
-        if (( fileSize > currentSize )) ; then
-            if (( currentDuplicates > 1 )) ; then
-                compareFiles
-            fi
-            DUPLICATE_LIST=()
-            currentDuplicates=0
-            currentSize=$fileSize
-        fi
-        DUPLICATE_LIST+=("${FILE_LIST[k]}")
-        (( currentDuplicates += 1 ))
-    done
+    if (( $HARDLINKS_REPLACE == 1 )) ; then
+        echo "replace $file with link to $aliasFile"
+    else
+        echo "remove $file"
+    fi
 }
 
 # wydrukowanie raportu
@@ -200,7 +215,7 @@ fi
 findAndSortFiles
 
 # porownanie plikow na FILE_LIST i usuniecie duplikatow
-findAndRemoveDuplicates
+removeDuplicates
 
 # wydrukowanie raportu koncowego
 printReport
