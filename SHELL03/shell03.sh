@@ -66,9 +66,9 @@ findAndSortFiles () {
     # wyniku polecenia find
     tempFile=$(mktemp ./tmp01XXXXXX)
     if [[ $MAX_DEPTH == -1 ]] ; then 
-        find $DIR -type f -print0 | xargs -0 stat -c '%s %n' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+        find $DIR -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
     else
-        find $DIR -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -c '%s %n' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+        find $DIR -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
     fi
 
     # wypelnienie FILE_LIST
@@ -94,7 +94,7 @@ removeDuplicates () {
     local currentDuplicates=0
 
     for (( k=0 ; k < ${#FILE_LIST[@]} ; k++ )) ; do
-        local fileSize=$(stat -c%s "${FILE_LIST[k]}")
+        local fileSize=$(stat -f%z "${FILE_LIST[k]}")
 
         # dodawanie do listy DUPLICATE_LIST dopoki maja takie same rozmiary
         if [[ $fileSize > $currentSize ]] ; then
