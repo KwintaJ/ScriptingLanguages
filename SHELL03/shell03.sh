@@ -14,18 +14,21 @@ set -e
 # dozwolone flagi opcji
 SHORT_OPTS=""
 LONG_OPTS="replace-with-hardlinks help max-depth: hash-algo:"
-# opcje 
+
+# opcje i ich domyslne wartosci
 HELP=0
 MAX_DEPTH=1
 HASH_ALGO="md5"
 HARDLINKS_REPLACE=0
+
 # jedyny argument - docelowy folder
 DIR=""
-# lista z zawartoscia folderu DIR
-FILE_LIST=()
+
 # zmienne operacyjne
+FILE_LIST=()
 DUPLICATE_LIST=()
-# zmienne do raportu
+
+# zmienne wynikowe
 processedFiles=0
 duplicatesFound=0
 filesRemoved=0
@@ -62,12 +65,14 @@ findAndSortFiles () {
     # stworzenie pliku tymczasowego i wpisanie do niego 
     # wyniku polecenia find
     tempFile=$(mktemp ./tmp01XXXXXX)  
-    find .  -maxdepth 3 -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+    find $DIR  -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
 
     # wypelnienie FILE_LIST
     while IFS= read -r file; do
-        # pomiń plik tymczasowy
-        [[ "$file" == "$tempFile" ]] && continue
+        # pominiecie pliku tymczasowego
+        if [[ "$(realpath "$file")" == "$(realpath "$tempFile")" ]] ; then
+            continue
+        fi
 
         FILE_LIST+=("$file")
         (( processedFiles += 1 ))
@@ -85,7 +90,8 @@ removeDuplicates () {
 
     for (( k=0 ; k < ${#FILE_LIST[@]} ; k++ )) ; do
         local fileSize=$(stat -f%z "${FILE_LIST[k]}")
-        
+
+        # dodawanie do listy DUPLICATE_LIST dopoki maja takie same rozmiary
         if [[ $fileSize > $currentSize ]] ; then
             if [[ $currentDuplicates > 1 ]] ; then
                 compareFiles
@@ -97,6 +103,8 @@ removeDuplicates () {
         DUPLICATE_LIST+=("${FILE_LIST[k]}")
         (( currentDuplicates += 1 ))
     done
+    # ostatnie porownanie - najwiekszy plik/najwieksze pliki
+    compareFiles
 }
 
 # funkcja porownuje $1 plikow z DUPLICATE_LIST
@@ -198,11 +206,6 @@ if [[ $# < 1 ]] ; then
     exit 2
 else
     DIR=$1
-fi
-
-# jesli nie ma dodanie / na koncu nazwy folderu
-if [[ ${DIR: -1} != "/" ]] ; then
-    DIR="$DIR"/
 fi
 
 # sprawdzenie czy podany folder istnieje
