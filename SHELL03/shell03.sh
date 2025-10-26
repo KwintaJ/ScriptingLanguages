@@ -74,7 +74,8 @@ findAndSortFiles () {
             continue
         fi
 
-        FILE_LIST+=("$file")
+        # uzywanie sciezek bezwzlednych
+        FILE_LIST+=("$(realpath "$file")")
         (( processedFiles += 1 ))
     done < "$tempFile"
     
@@ -142,11 +143,12 @@ removeFile () {
     file=$1
     aliasFile=$2
 
+    rm "$file"
     if [[ $HARDLINKS_REPLACE == 1 ]] ; then
-        echo "replace $file with link to $aliasFile"
-    else
-        echo "remove $file"
+        ln "$aliasFile" "$file"
     fi
+
+    (( filesRemoved += 1 ))
 }
 
 # wydrukowanie raportu
