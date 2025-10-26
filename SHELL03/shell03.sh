@@ -147,8 +147,8 @@ removeAndLink () {
     file=$1
     aliasFile=$2
 
-    rm "$file"
     if [[ $HARDLINKS_REPLACE == 1 ]] ; then
+        rm "$file"
         ln "$aliasFile" "$file"
         (( filesLinked += 1 ))
     fi
