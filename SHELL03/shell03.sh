@@ -130,16 +130,16 @@ compareFiles () {
                 if cmp -s "${DUPLICATE_LIST[i]}" "${DUPLICATE_LIST[j]}" ; then
                     (( duplicatesFound += 1 ))
                     alreadyRemoved[j]=1
-                    removeFile "${DUPLICATE_LIST[j]}" "${DUPLICATE_LIST[i]}"
+                    removeAndLink "${DUPLICATE_LIST[j]}" "${DUPLICATE_LIST[i]}"
                 fi
             fi
         done
     done
 }
 
-# funkcja usuwa plik $1 lub jesli podniesiona jest flaga
+# funkcja usuwa plik $1 i jesli podniesiona jest flaga
 # HARDLINKS_REPLACE to zastepuje go hardlinkiem do $2
-removeFile () {
+removeAndLink () {
     file=$1
     aliasFile=$2
 
