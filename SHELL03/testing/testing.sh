@@ -29,22 +29,22 @@ du -d 0 .
 echo ""
 
 echo "--max-depth=3"
-../shell03.sh --max-depth=3 .
+time ../shell03.sh --max-depth=3 .
 du -d 0 .
 echo ""
 
 echo "--max-depth=infinity"
-../shell03.sh .
+time ../shell03.sh .
 du -d 0 .
 echo ""
 
 echo "--max-depth=3 --replace-with-hardlinks"
-../shell03.sh --max-depth=3 --replace-with-hardlinks .
+time ../shell03.sh --max-depth=3 --replace-with-hardlinks .
 du -d 0 .
 echo ""
 
 echo "--max-depth=infinity --replace-with-hardlinks"
-../shell03.sh --replace-with-hardlinks .
+time ../shell03.sh --replace-with-hardlinks .
 du -d 0 .
 echo ""
 
