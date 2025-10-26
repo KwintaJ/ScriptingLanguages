@@ -69,7 +69,7 @@ findAndSortFiles () {
     # wyniku polecenia find
     tempFile=$(mktemp ./tmp01XXXXXX)
     find "$DIR" -maxdepth $MAX_DEPTH -type f -print0 | while IFS= read -r -d '' file ; do
-        echo "$(stat -f '%z' "$file") $file"
+        echo "$(stat -c '%s' "$file") $file"
     done > "$tempFile"
 
     # sortowanie
