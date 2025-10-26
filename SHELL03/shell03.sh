@@ -17,7 +17,7 @@ LONG_OPTS="replace-with-hardlinks help max-depth: hash-algo:"
 
 # opcje i ich domyslne wartosci
 HELP=0
-MAX_DEPTH=-1
+MAX_DEPTH=20
 HASH_ALGO="md5"
 HARDLINKS_REPLACE=0
 
@@ -25,8 +25,11 @@ HARDLINKS_REPLACE=0
 DIR=""
 
 # zmienne operacyjne
-FILE_LIST=()
-DUPLICATE_LIST=()
+declare FILE_LIST
+declare FILE_HASH
+declare SIZE_LIST
+declare DUPLICATE_LIST
+declare ALREADY_REMOVED
 
 # zmienne wynikowe
 processedFiles=0
@@ -65,27 +68,38 @@ findAndSortFiles () {
     # stworzenie pliku tymczasowego i wpisanie do niego 
     # wyniku polecenia find
     tempFile=$(mktemp ./tmp01XXXXXX)
-    if [[ $MAX_DEPTH == -1 ]] ; then 
-        #find $DIR -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
-        find "$DIR" -type f -printf "%s %p\0" | sort -zn | xargs -0 -n1 bash -c 'echo "${0#* }"' > $tempFile
-    else
-        #find $DIR -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
-        find "$DIR" -maxdepth $MAX_DEPTH -type f -printf "%s %p\0" | sort -zn | xargs -0 -n1 bash -c 'echo "${0#* }"' > $tempFile
-    fi
+    find "$DIR" -maxdepth $MAX_DEPTH -type f -print0 | while IFS= read -r -d '' file ; do
+        echo "$(stat -f '%z' "$file") $file"
+    done > "$tempFile"
+
+    # sortowanie
+    sort -n "$tempFile" -o "$tempFile"
 
     # wypelnienie FILE_LIST
-    while IFS= read -r file; do
+    m=0
+    while IFS= read -r line ; do
+        local size="${line%% *}"
+        local name="${line#* }"
         # pominiecie pliku tymczasowego
-        if [[ "$(realpath "$file")" == "$(realpath "$tempFile")" ]] ; then
+        if [[ "$(realpath "$name")" == "$(realpath "$tempFile")" ]] ; then
             continue
         fi
 
-        FILE_LIST+=("$file")
+        FILE_LIST[m]="$name"
+        SIZE_LIST[m]="$size"
         (( processedFiles += 1 ))
+        (( m += 1 ))
     done < "$tempFile"
 
     # usuniecie pliku tymczasowego
     rm $tempFile
+
+    # obliczenie hash dla każdego pliku
+    # i wypełnienie ALREADY_REMOVED
+    for (( l=0 ; l < ${#FILE_LIST[@]} ; l++ )) ; do
+        FILE_HASH[l]=$("$HASH_ALGO"sum "${FILE_LIST[l]}" | awk '{print $1}')
+        ALREADY_REMOVED[l]=0
+    done
 }
 
 # funkcja iteruje sie po FILE_LIST szukajac plikow o
@@ -95,18 +109,16 @@ removeDuplicates () {
     local currentDuplicates=0
 
     for (( k=0 ; k < ${#FILE_LIST[@]} ; k++ )) ; do
-        local fileSize=$(stat -c%s "${FILE_LIST[k]}")
-
         # dodawanie do listy DUPLICATE_LIST dopoki maja takie same rozmiary
-        if [[ $fileSize > $currentSize ]] ; then
+        if [[ ${SIZE_LIST[k]} > $currentSize ]] ; then
             if [[ $currentDuplicates > 1 ]] ; then
                 compareFiles
             fi
-            DUPLICATE_LIST=()
+            unset DUPLICATE_LIST
             currentDuplicates=0
-            currentSize=$fileSize
+            currentSize=${SIZE_LIST[k]}
         fi
-        DUPLICATE_LIST+=("${FILE_LIST[k]}")
+        DUPLICATE_LIST+=("$k")
         (( currentDuplicates += 1 ))
     done
     # ostatnie porownanie - najwiekszy plik/najwieksze pliki
@@ -116,26 +128,22 @@ removeDuplicates () {
 # funkcja porownuje $1 plikow z DUPLICATE_LIST
 # oraz usuwa/podmienia duplikaty 
 compareFiles () {
-    local alreadyRemoved=()
-    for (( i=0 ; i < ${#DUPLICATE_LIST[@]} ; i++ )) ; do
-        alreadyRemoved[i]=0
-    done
-
     for (( i=0 ; i < ${#DUPLICATE_LIST[@]} ; i++ )) ; do
         for (( j=$i + 1 ; j < ${#DUPLICATE_LIST[@]} ; j++ )) ; do
-            if [[ ${alreadyRemoved[i]} == 1 ]] ; then
+            local file1=${DUPLICATE_LIST[i]}
+            local file2=${DUPLICATE_LIST[j]}
+
+            if [[ ${ALREADY_REMOVED[$file1]} == 1 ]] ; then
                 continue 2
-            elif [[ ${alreadyRemoved[j]} == 1 ]] ; then
+            elif [[ ${ALREADY_REMOVED[$file2]} == 1 ]] ; then
                 continue
             fi
 
-            local hash1=$("$HASH_ALGO"sum "${DUPLICATE_LIST[i]}" | awk '{print $1}')
-            local hash2=$("$HASH_ALGO"sum "${DUPLICATE_LIST[j]}" | awk '{print $1}')
-            if [[ "$hash1" == "$hash2" ]] ; then
-                if cmp -s "${DUPLICATE_LIST[i]}" "${DUPLICATE_LIST[j]}" ; then
+            if [[ ${FILE_HASH[$file1]} == ${FILE_HASH[$file2]} ]] ; then
+                if cmp -s "${FILE_LIST[$file1]}" "${FILE_LIST[$file2]}" ; then
                     (( duplicatesFound += 1 ))
-                    alreadyRemoved[j]=1
-                    removeAndLink "${DUPLICATE_LIST[j]}" "${DUPLICATE_LIST[i]}"
+                    ALREADY_REMOVED[$file2]=1
+                    removeAndLink "$file2" "$file1"
                 fi
             fi
         done
@@ -149,8 +157,8 @@ removeAndLink () {
     aliasFile=$2
 
     if [[ $HARDLINKS_REPLACE == 1 ]] ; then
-        rm "$file"
-        ln "$aliasFile" "$file"
+        rm "${FILE_LIST[$file]}"
+        ln "${FILE_LIST[$aliasFile]}" "${FILE_LIST[$file]}"
         (( filesLinked += 1 ))
     fi
 }
