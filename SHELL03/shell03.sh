@@ -66,11 +66,11 @@ findAndSortFiles () {
     # wyniku polecenia find
     tempFile=$(mktemp ./tmp01XXXXXX)
     if [[ $MAX_DEPTH == -1 ]] ; then 
-        find $DIR -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
-        #find "$DIR" -type f -printf "%s %p\0" | sort -zn | xargs -0 -n1 bash -c 'echo "${0#* }"' > $tempFile
+        #find $DIR -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+        find "$DIR" -type f -printf "%s %p\0" | sort -zn | xargs -0 -n1 bash -c 'echo "${0#* }"' > $tempFile
     else
-        find $DIR -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
-        #find "$DIR" -maxdepth $MAX_DEPTH -type f -printf "%s %p\0" | sort -zn | xargs -0 -n1 bash -c 'echo "${0#* }"' > $tempFile
+        #find $DIR -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+        find "$DIR" -maxdepth $MAX_DEPTH -type f -printf "%s %p\0" | sort -zn | xargs -0 -n1 bash -c 'echo "${0#* }"' > $tempFile
     fi
 
     # wypelnienie FILE_LIST
