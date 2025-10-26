@@ -31,7 +31,7 @@ DUPLICATE_LIST=()
 # zmienne wynikowe
 processedFiles=0
 duplicatesFound=0
-filesRemoved=0
+filesLinked=0
 
 
 
@@ -146,16 +146,15 @@ removeAndLink () {
     rm "$file"
     if [[ $HARDLINKS_REPLACE == 1 ]] ; then
         ln "$aliasFile" "$file"
+        (( filesLinked += 1 ))
     fi
-
-    (( filesRemoved += 1 ))
 }
 
 # wydrukowanie raportu
 printReport () {
     echo "Liczba przetworzonych plikow: $processedFiles"
     echo "Liczba znalezionych duplikatow: $duplicatesFound"
-    echo "Liczba zastapionych duplikatow: $filesRemoved"
+    echo "Liczba zastapionych duplikatow: $filesLinked"
 }
 
 
