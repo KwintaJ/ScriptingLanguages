@@ -66,31 +66,26 @@ findAndSortFiles () {
     # wyniku polecenia find
     tempFile=$(mktemp ./tmp01XXXXXX)
     if [[ $MAX_DEPTH == -1 ]] ; then 
-        find "$DIR" -type f -printf "%s %p\0" | sort -zn | xargs -0 -n1 bash -c 'echo "${0#* }"' > $tempFile
+        find $DIR -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+        #find "$DIR" -type f -printf "%s %p\0" | sort -zn | xargs -0 -n1 bash -c 'echo "${0#* }"' > $tempFile
     else
-        find "$DIR" -maxdepth $MAX_DEPTH -type f -printf "%s %p\0" | sort -zn | xargs -0 -n1 bash -c 'echo "${0#* }"' > $tempFile
+        find $DIR -maxdepth $MAX_DEPTH -type f -print0 | xargs -0 stat -f '%z %N' | sort -n | awk '{ $1=""; sub(/^ /, ""); print }' > $tempFile
+        #find "$DIR" -maxdepth $MAX_DEPTH -type f -printf "%s %p\0" | sort -zn | xargs -0 -n1 bash -c 'echo "${0#* }"' > $tempFile
     fi
 
     # wypelnienie FILE_LIST
-    while IFS= read -r -d '' file ; do
+    while IFS= read -r file; do
         # pominiecie pliku tymczasowego
         if [[ "$(realpath "$file")" == "$(realpath "$tempFile")" ]] ; then
             continue
         fi
 
-        FILE_LIST+=("$(stat -f "%z %N" "$file")")
+        FILE_LIST+=("$file")
         (( processedFiles += 1 ))
     done < "$tempFile"
 
     # usuniecie pliku tymczasowego
     rm $tempFile
-
-    # sortowanie po rozmiarze
-    IFS=$'\n' FILE_LIST=($(sort -n <<<"${FILE_LIST[*]}"))
-    
-    for i in "${!FILE_LIST[@]}"; do
-        FILE_LIST[$i]="${FILE_LIST[$i]#* }"
-    done
 }
 
 # funkcja iteruje sie po FILE_LIST szukajac plikow o
