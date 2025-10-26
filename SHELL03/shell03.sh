@@ -21,9 +21,8 @@ HASH_ALGO="md5"
 HARDLINKS_REPLACE=0
 # jedyny argument - docelowy folder
 DIR=""
-# listy z zawartoscia folderu DIR
-DIR_LIST=()    # wszystkie rzeczy w folderze
-FILE_LIST=()   # wszystkie pliki w folderze
+# lista z zawartoscia folderu DIR
+FILE_LIST=()
 # zmienne operacyjne
 DUPLICATE_LIST=()
 # zmienne do raportu
@@ -54,48 +53,32 @@ printHelp () {
     echo ""
 }
 
-# funkcja dodaje do DIR_LIST wszystko w folderze
-# $1 - nazwa folderu, ktorego zawartosc funkcja ma dodac do listy
-# $2 - w ile jeszcze poziomow podfolderow funkcja ma wejsc
-addDirectoryContents () {
-    local currentDir=$1
-    local currentDepth=$2
+# funkcja przeszukuje drzewo folderow, tworzy liste plikow
+# i sortuje liste wzgledem rozmiaru plikow
+findAndSortFiles () {
+    # wpisanie do FILE_LIST tylko plikow z podanego folderu
+    # oraz poddfolderow do MAX_DEPTH poziomow w dol
     
-    # ls
-    local currentList=()
-    currentList+=$(ls -p $currentDir)
-    # ls dodajemy do listy
-    for thing in $currentList ; do
-        DIR_LIST+=("$currentDir$thing")
-    done
+    # stworzenie pliku tymczasowego i wpisanie do niego 
+    # wyniku polecenia find
+	tempFile=$(mktemp ./tmp01XXXXXX)  
+    find $DIR -type f -print0 -maxdepth $MAX_DEPTH > $tempFile
     
-    # konczymy jesli jestesmy na najnizszym poziomie
-    if (( currentDepth <= 1 )) ; then
-        return 0
-    fi
-    
-    # w przeciwnym wypadku dodajemy rekurencyjnie rzeczy w podfolderach
-    for thing in $currentList ; do
-        if [[ -d "$currentDir$thing" ]] ; then
-            addDirectoryContents "$currentDir$thing" $(( currentDepth - 1 ))
+    # wypelnienie FILE_LIST
+    while IFS= read -r -d '' file ; do
+        if [[ "$file" == "$tempFile" ]] ; then
+            continue
         fi
-    done
-}
-
-# funkcja kopiuje z DIR_LIST do FILE_LIST tylko nazwy plikow
-# (nie foldery) i sortuje je wzgledem rozmiaru
-filterAndSortFiles () {
-    # wpisanie do FILE_LIST plikow
-    for thing in ${DIR_LIST[@]} ; do
-        if [[ ! -d "$thing" ]] ; then
-            FILE_LIST+=("$thing")
-            ((processedFiles += 1))
-        fi
-    done
-
+		FILE_LIST+=("$file")
+        (( processedFiles += 1 ))
+	done < $tempFile
+    
+    # usuniecie pliku tymczasowego
+    rm $tempFile
+    
     # posortowanie FILE_LIST po rozmiarze
     FILE_LIST=$(for file in ${FILE_LIST[@]} ; do
-        echo "$(stat -f%z "$file") $file"
+        echo "$(stat -c%s "$file") $file"
     done | sort -n | awk '{print $2}')
 }
 
@@ -118,7 +101,7 @@ findAndRemoveDuplicates () {
     local currentDuplicates=0
 
     for file in $FILE_LIST ; do
-        local fileSize=$(stat -f%z "$file")
+        local fileSize=$(stat -c%s "$file")
         
         if (( fileSize > currentSize )) ; then
             if (( currentDuplicates > 1 )) ; then
@@ -130,7 +113,7 @@ findAndRemoveDuplicates () {
         fi
 
         DUPLICATE_LIST+=("$file")
-        ((currentDuplicates += 1))
+        (( currentDuplicates += 1 ))
     done
 }
 
@@ -204,11 +187,8 @@ if [[ ! -d "$DIR" ]] ; then
     exit 3
 fi
 
-# stworzenie DIR_LIST
-addDirectoryContents $DIR $MAX_DEPTH
-
 # stworzenie FILE_LIST
-filterAndSortFiles
+findAndSortFiles
 
 # porownanie plikow na FILE_LIST i usuniecie duplikatow
 findAndRemoveDuplicates
