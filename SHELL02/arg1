@@ -11,7 +11,7 @@ options=($(printf '0 %.0s' {1..26}))
 
 # sprawdzenie obecnych flag opcji
 # i zaznaczenie tego w tablicy
-while getopts ":i:o:qabcdefghijklmnoprstuvwxyz" flag; do
+while getopts ":i:o:qabcdefghijklmnoprstuvwxyz" flag ; do
     case "$flag" in
         q)
             # jesli jest -q zakonczenie programu
@@ -47,10 +47,10 @@ fi
 
 # wypisanie obecnych opcji
 # a dla -i oraz -o wypisanie nazw plikow
-for ((i = 0; i < 26; i++)); do
+for (( i=0 ; i < 26 ; i++ )) ; do
     letter=$(printf "\\$(printf '%03o' $((97 + i)))")
 
-    if (( ${options[i]} == 1 )) ; then
+    if [[ ${options[i]} == 1 ]] ; then
         if [[ $letter == "i" ]] ; then
             echo "-i present and set to \"$inputFile\""
         elif [[ $letter == "o" ]] ; then
@@ -64,7 +64,7 @@ done
 # wypisanie argumentow
 argNum=$#
 optNum=$OPTIND
-if (( $((argNum - optNum + 1)) > 0 )) ; then
+if [[ $(( argNum - optNum + 1 )) > 0 ]] ; then
     echo "Arguments are:"
     for i in $(seq $optNum $argNum) ; do
         ind=$((i - optNum + 1))
