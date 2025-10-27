@@ -29,7 +29,7 @@ declare FILE_LIST
 declare FILE_HASH
 declare SIZE_LIST
 declare DUPLICATE_LIST
-declare ALREADY_REMOVED
+declare ALREADY_LINKED
 
 # zmienne wynikowe
 processedFiles=0
@@ -95,16 +95,16 @@ findAndSortFiles () {
     rm $tempFile
 
     # obliczenie hash dla każdego pliku
-    # i wypełnienie ALREADY_REMOVED
+    # i wypełnienie ALREADY_LINKED
     for (( l=0 ; l < ${#FILE_LIST[@]} ; l++ )) ; do
         FILE_HASH[l]=$("$HASH_ALGO"sum "${FILE_LIST[l]}" | awk '{print $1}')
-        ALREADY_REMOVED[l]=0
+        ALREADY_LINKED[l]=0
     done
 }
 
 # funkcja iteruje sie po FILE_LIST szukajac plikow o
 # takiej samej wielkosci i wywoluje compareFiles
-removeDuplicates () {
+findDuplicates () {
     local currentSize=-1
     local currentDuplicates=0
 
@@ -126,24 +126,26 @@ removeDuplicates () {
 }
 
 # funkcja porownuje $1 plikow z DUPLICATE_LIST
-# oraz usuwa/podmienia duplikaty 
+# (oraz podmienia duplikaty na hardlinki)
 compareFiles () {
     for (( i=0 ; i < ${#DUPLICATE_LIST[@]} ; i++ )) ; do
         for (( j=$i + 1 ; j < ${#DUPLICATE_LIST[@]} ; j++ )) ; do
             local file1=${DUPLICATE_LIST[i]}
             local file2=${DUPLICATE_LIST[j]}
 
-            if [[ ${ALREADY_REMOVED[$file1]} == 1 ]] ; then
+            if [[ ${ALREADY_LINKED[$file1]} == 1 ]] ; then
                 continue 2
-            elif [[ ${ALREADY_REMOVED[$file2]} == 1 ]] ; then
+            elif [[ ${ALREADY_LINKED[$file2]} == 1 ]] ; then
                 continue
             fi
 
             if [[ ${FILE_HASH[$file1]} == ${FILE_HASH[$file2]} ]] ; then
                 if cmp -s "${FILE_LIST[$file1]}" "${FILE_LIST[$file2]}" ; then
                     (( duplicatesFound += 1 ))
-                    ALREADY_REMOVED[$file2]=1
-                    removeAndLink "$file2" "$file1"
+                    ALREADY_LINKED[$file2]=1
+                    if [[ $HARDLINKS_REPLACE == 1 ]] ; then
+                        removeAndLink "$file2" "$file1"
+                    fi
                 fi
             fi
         done
@@ -153,14 +155,9 @@ compareFiles () {
 # funkcja usuwa plik $1 i jesli podniesiona jest flaga
 # HARDLINKS_REPLACE to zastepuje go hardlinkiem do $2
 removeAndLink () {
-    file=$1
-    aliasFile=$2
-
-    if [[ $HARDLINKS_REPLACE == 1 ]] ; then
-        rm "${FILE_LIST[$file]}"
-        ln "${FILE_LIST[$aliasFile]}" "${FILE_LIST[$file]}"
-        (( filesLinked += 1 ))
-    fi
+    rm "${FILE_LIST[$1]}"
+    ln "${FILE_LIST[$2]}" "${FILE_LIST[$1]}"
+    (( filesLinked += 1 ))
 }
 
 # wydrukowanie raportu
@@ -231,8 +228,9 @@ fi
 # stworzenie FILE_LIST
 findAndSortFiles
 
-# porownanie plikow na FILE_LIST i usuniecie duplikatow
-removeDuplicates
+# porownanie plikow na FILE_LIST w poszukiwaniu duplikatow
+# i ewentualne zastapienie ich hardlinkami
+findDuplicates
 
 # wydrukowanie raportu koncowego
 printReport
