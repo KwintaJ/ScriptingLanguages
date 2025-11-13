@@ -23,4 +23,33 @@ if [ -f "$PORT_FILE" ] ; then
 fi
 
 ###########################################################
+# sprawdzenie argumentow
+if (( "$#" < 1 )) ; then
+    echo "Use client ?/INC/test1"
+    exit 1
+fi
+
+MSG=$1
+
+###########################################################
 # wyslanie wiadomosci do serwera
+
+case "$MSG" in
+    "?")
+        RSP=$( echo "?" | nc localhost $SERVER_PORT )
+        echo $RSP
+        ;;
+    "INC")
+        echo "INC" | nc localhost $SERVER_PORT
+        ;;
+    "test1")
+        RSP=$( echo "?" | nc localhost $SERVER_PORT )
+        echo $RSP
+        echo "INC" | nc localhost $SERVER_PORT
+        RSP=$( echo "?" | nc localhost $SERVER_PORT )
+        echo $RSP
+        echo "INC" | nc localhost $SERVER_PORT
+        RSP=$( echo "?" | nc localhost $SERVER_PORT )
+        echo $RSP
+        ;;
+esac
