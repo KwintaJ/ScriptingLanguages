@@ -45,16 +45,15 @@ filesLinked=0
 printHelp () {
     echo "--------File duplicate remover--------"
     echo ""
-    echo "    Use this script to search a directory for"
-    echo "    file duplicates and remove any if found."
+    echo "    Use this script to search a directory for duplicate files."
     echo ""
     echo ""
     echo " Usage:"
     echo " ./shell03.sh [--replace-with-hardlinks][--max-depth=N][--hash-algo=X] DIRNAME"
     echo ""
-    echo "    replace-with-hardlinks: Replaces duplicates with hardlinks instead of removing."
-    echo "    max-depth: Searches in subdirectories up to N directories deep."
-    echo "    hash-algo: Uses specific hash function to compare files. Default is md5."
+    echo "    --replace-with-hardlinks: Replaces duplicates with hardlinks (saves drive space)"
+    echo "    --max-depth: Searches in subdirectories up to N directories deep. Default is infinity."
+    echo "    --hash-algo: Uses specific hash function to compare files. Default is md5."
     echo ""
     echo ""
 }
@@ -75,7 +74,7 @@ findAndSortFiles () {
     # sortowanie
     sort -n "$tempFile" -o "$tempFile"
 
-    # wypelnienie FILE_LIST
+    # wypelnienie FILE_LIST i SIZE_LIST
     m=0
     while IFS= read -r line ; do
         local size="${line%% *}"
@@ -126,7 +125,7 @@ findDuplicates () {
 }
 
 # funkcja porownuje $1 plikow z DUPLICATE_LIST
-# (oraz podmienia duplikaty na hardlinki)
+# (i ewentualnie podmienia duplikaty na hardlinki)
 compareFiles () {
     for (( i=0 ; i < ${#DUPLICATE_LIST[@]} ; i++ )) ; do
         for (( j=$i + 1 ; j < ${#DUPLICATE_LIST[@]} ; j++ )) ; do
@@ -152,11 +151,9 @@ compareFiles () {
     done
 }
 
-# funkcja usuwa plik $1 i jesli podniesiona jest flaga
-# HARDLINKS_REPLACE to zastepuje go hardlinkiem do $2
+# funkcja zastepuje plik $1 hardlinkiem do $2
 removeAndLink () {
-    rm "${FILE_LIST[$1]}"
-    ln "${FILE_LIST[$2]}" "${FILE_LIST[$1]}"
+    ln -f "${FILE_LIST[$2]}" "${FILE_LIST[$1]}"
     (( filesLinked += 1 ))
 }
 
