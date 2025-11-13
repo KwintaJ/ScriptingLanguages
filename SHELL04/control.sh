@@ -14,7 +14,7 @@ set -e
 SERVER_PORT=6789
 SERVER_COMMAND=""
 PORT_FILE="./.port"
-CONF_FILE="~/.config/server.conf"
+CONF_FILE="$HOME/.config/server.conf"
 PID_FILE="./server.pid"
 COUNTER_FILE="./counter.txt"
 
@@ -69,7 +69,7 @@ case "$SERVER_COMMAND" in
         stop)
             if [ -f "$PID_FILE" ] ; then
                 PID=$(cat "$PID_FILE")
-                if ps -p "$PID" > /dev/null 2>&1; then
+                if ps -p "$PID" > /dev/null 2>&1 ; then
                     kill "$PID" 2>/dev/null || true
                 fi
                 rm -f "$PID_FILE"
