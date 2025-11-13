@@ -8,12 +8,29 @@
 set -e
 
 
+###########################################################
+# reakca serwera na ?/INC
 
-########################################################################
-# start serwera
+COUNTER_FILE="./counter.txt"
 
-SERVER_PORT=$1
+read -r line || exit 0
 
-echo "Hello"
+case "$line" in
+    "?")
+        if [ -f "$COUNTER_FILE" ]; then
+            cat "$COUNTER_FILE"
+        else
+            echo "0"
+        fi
+        ;;
+    "INC")
+        if [ -f "$COUNTER_FILE" ]; then
+            COUNTER=$(cat "$COUNTER_FILE")
+        else
+            COUNTER=0
+        fi
 
-socat TCP-LISTEN:$SERVER_PORT,reuseaddr,fork STDOUT
+        (( COUNTER += 1 ))
+        echo "$COUNTER" > "$COUNTER_FILE"
+        ;;
+esac
