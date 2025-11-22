@@ -8,3 +8,4 @@ Programy pisane w ramach laboratoriów z kursu *Języki Skryptowe* prowadzonych 
 **SHELL02**: Działania na opcjach, argumentach opcji i argumentach linii poleceń  
 **SHELL03**: Operacje na plikach; program szukajacy i usuwajacy duplikaty plikow w folderach  
 **SHELL04**: Skrypt server-klient + skrypt kontrolny dla usługi systemowej; socat, nc, lsof  
+**PERL01**: Podstawy języka Perl  
