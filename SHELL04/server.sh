@@ -9,7 +9,7 @@ set -e
 
 
 ###########################################################
-# reakca serwera na ?/INC
+# reakcja serwera na ?/INC
 
 COUNTER_FILE="./counter.txt"
 
