@@ -56,9 +56,14 @@ for my $i (0..$rowsA-1) {
     }
 }
 
+open $file, '>', $fM or die "error file open $!\n";
 for my $i (0..$rowsA-1) {
     for my $j (0..$colsB-1) {
-		printf "%8.3f ", $mM[$i][$j];
+		printf $file "%8.3f", $mM[$i][$j];
+		if ($j < $colsB-1) {
+			printf $file " ";
+		}
 	}	
-	print "\n";
+	print $file "\n";
 }
+close $file;
