@@ -1,4 +1,9 @@
 #!/usr/bin/perl
+# Jan Kwinta
+#
+# 25.11.2025
+#
+# Problem PERL01-1
 use strict;
 use warnings;
 
