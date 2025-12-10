@@ -68,7 +68,7 @@ if ($opts{i}) {
 if ($opts{c} || $noopts) {
     $bytes = length($content);
     if(!$noopts) {
-        printf "%7d %s\n", $bytes, $filename;
+        printf "%8d %s\n", $bytes, $filename;
     }
 }
 
@@ -77,14 +77,14 @@ if ($opts{m}) {
     my $decoded = decode('UTF-8', $content);
     $chars = length($decoded);
     if(!$noopts) {
-        printf "%7d %s\n", $chars, $filename;
+        printf "%8d %s\n", $chars, $filename;
     }
 }
 
 if ($opts{l} || $noopts) {
     $lines = ($content =~ tr/\n/\n/);
     if(!$noopts) {
-        printf "%7d %s\n", $lines, $filename;
+        printf "%8d %s\n", $lines, $filename;
     }
 }
 
@@ -92,39 +92,35 @@ if ($opts{w} || $noopts) {
     my @words = split /\s+/, $content;
     $wordcount = @words;
     if(!$noopts) {
-        printf "%7d %s\n", $wordcount, $filename;
+        printf "%8d %s\n", $wordcount, $filename;
     }
 }
 
 if ($noopts) {
-    printf "%7d %7d %7d %s\n", $lines, $wordcount, $bytes, $filename;
+    printf "%8d %7d %7d %s\n", $lines, $wordcount, $bytes, $filename;
 }
 
-# if ($opts{p}) {
-#     my @raw_words = split /[ \t\r\n]+/, $content;
-#     @raw_words = map { lc $_ } @raw_words;
+if ($opts{p}) {
+    # rozbicie na slowa
+    my @raw_words = split /\s+/, $content;
 
-#     # regex zmiana nieangielskich liter na ?
-#     sub normalize {
-#         my ($w) = @_;
-#         $w =~ s/[^a-zA-Z]/?/g;
-#         return $w;
-#     }
+    my %count;
+    $count{$_}++ for @raw_words;
 
-#     my %count;
-#     $count{$_}++ for @raw_words;
+    # procedura zamieniajaca litery spoza a-zA-z na ?
+    sub normalize {
+        my ($w) = @_;
+        $w =~ s/[^a-zA-Z]/?/g;
+        return $w;
+    }
 
-#     my @sorted = 
-#         sort {
-#             $count{$b} <=> $count{$a}   # liczba wystąpień malejąco
-#             ||
-#             normalize($a) cmp normalize($b)   # leksykograficznie
-#         }
-#         keys %count;
+    # sortowanie po liczbie wystapien i leksykograficznie
+    my @sorted = sort {$count{$b} <=> $count{$a} || normalize($a) cmp normalize($b)} keys %count;
 
-#     my $limit = 10;
-#     for my $w (@sorted[0 .. $limit-1]) {
-#         my $norm = normalize($w);
-#         print "$norm $count{$w}\n";
-#     }
-# }
+    # wypisanie top 10
+    for my $i (0..9) {
+        my $w = $sorted[$i];
+        my $nw = normalize($w);
+        print "$nw $count{$w}\n"
+    }
+}
