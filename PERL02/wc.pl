@@ -68,7 +68,7 @@ if ($opts{i}) {
 if ($opts{c} || $noopts) {
     $bytes = length($content);
     if(!$noopts) {
-        printf "%8d %s\n", $bytes, $filename;
+        printf "%d %s\n", $bytes, $filename;
     }
 }
 
@@ -77,14 +77,14 @@ if ($opts{m}) {
     my $decoded = decode('UTF-8', $content);
     $chars = length($decoded);
     if(!$noopts) {
-        printf "%8d %s\n", $chars, $filename;
+        printf "%d %s\n", $chars, $filename;
     }
 }
 
 if ($opts{l} || $noopts) {
     $lines = ($content =~ tr/\n/\n/);
     if(!$noopts) {
-        printf "%8d %s\n", $lines, $filename;
+        printf "%d %s\n", $lines, $filename;
     }
 }
 
@@ -92,7 +92,7 @@ if ($opts{w} || $noopts) {
     my @words = split /\s+/, $content;
     $wordcount = @words;
     if(!$noopts) {
-        printf "%8d %s\n", $wordcount, $filename;
+        printf "%d %s\n", $wordcount, $filename;
     }
 }
 
@@ -118,7 +118,11 @@ if ($opts{p}) {
     my @sorted = sort {$count{$b} <=> $count{$a} || normalize($a) cmp normalize($b)} keys %count;
 
     # wypisanie top 10
-    for my $i (0..9) {
+    my $lim = 9;
+    if(@sorted < 9) {
+        $lim = @sorted - 1;
+    }
+    for my $i (0 .. $lim) {
         my $w = $sorted[$i];
         my $nw = normalize($w);
         print "$nw $count{$w}\n"
