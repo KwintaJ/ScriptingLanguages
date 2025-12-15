@@ -31,9 +31,9 @@ close $filehandler;
 
 ##########################################################
 # zliczanie czestosci znakow
-$content= uc($content); 
+$content = uc($content); 
 $content =~ s/\r?\n//g;
-$content=~ s/ /_/g;
+$content =~ s/ /_/g;
 
 our %freq_c = ("A" => 0, "B" => 0, "C" => 0, "D" => 0, "E" => 0, "F" => 0, "G" => 0, "H" => 0, "I" => 0, "J" => 0, "K" => 0, "L" => 0, "M" => 0, "N" => 0, "O" => 0, "P" => 0, "R" => 0, "S" => 0, "T" => 0, "U" => 0, "V" => 0, "W" => 0, "X" => 0, "Y" => 0, "Z" => 0, "_" => 0);
 our $total = 0;
@@ -45,10 +45,10 @@ for my $c (split //, $content) {
 
 our @c_by_freq = sort { $freq_c{$b} <=> $freq_c{$a} } keys %freq_c;
 
-foreach my $c (@c_by_freq) {
-    print "$c $freq_c{$c}\n";
-}
-print "\n";
+# foreach my $c (@c_by_freq) {
+#     print "$c $freq_c{$c}\n";
+# }
+# print "\n";
 
 ##########################################################
 # przetworzenie spacji
@@ -92,15 +92,15 @@ for my $line (split /\n/, $wc_result) {
 
 our @w_by_freq = sort { $freq_w{$b} <=> $freq_w{$a} } keys %freq_w;
 
-foreach my $w (@w_by_freq) {
-    print "$w $freq_w{$w}\n";
-}
-print "\n";
+# foreach my $w (@w_by_freq) {
+#     print "$w $freq_w{$w}\n";
+# }
+# print "\n";
 
 ##########################################################
 # decrypt - analiza czestotliwosciowa
 
-our @letter_rank = qw(A E I O Z S L N C W R Y T K M D P J U B G H F V X Q);
+our @letter_rank = qw(_ A E I O Z S L N C W R Y T K M D P J U B G H F V X Q);
 our @word_rank = qw(I SIE W NIE NA Z ZE TO A DO);
 our @all_mappings;
 
@@ -127,54 +127,99 @@ sub generate_mappings {
     }
 
     for my $i (0..26) {
-        if (substr($mapping, alphnum($c_by_freq[$i]), 1) eq "?") {
-            if(@letters == 1) {
-                substr($mapping, alphnum($c_by_freq[$i]), 1) = $letters[0];
-                last;
+        next if substr($mapping, alphnum($c_by_freq[$i]), 1) ne "?";
+        
+        if(@letters == 1) {
+            substr($mapping, alphnum($c_by_freq[$i]), 1) = $letters[0];
+            last;
             }
-            else {
-                for my $i (0..@letters-1) {
-                    my @almost_all_letters = @letters;
-                    substr($mapping, alphnum($c_by_freq[$i]), 1) = $letters[$i];
-                    splice(@almost_all_letters, $i, 1);
-                    generate_mappings($mapping, @almost_all_letters);
-                }
-                return;
+        else {
+            for my $j (0..@letters-1) {
+                my @almost_all_letters = @letters;
+                my $new_mapping = $mapping;
+                substr($new_mapping, alphnum($c_by_freq[$i]), 1) = $letters[$j];
+                splice(@almost_all_letters, $j, 1);
+                generate_mappings($new_mapping, @almost_all_letters);
             }
+            return;
         }
     }
 
-    # for my $i (0..26) {
-    #     if (substr($mapping, alphnum($c_by_freq[$i]), 1) eq "?") {
-    #         my $current_c = $c_by_freq[$i];
-    #         my $next_c
-    #         if($freq_c{$current_c}
-    #     }
-    # }
+    my $q_marks = () = $mapping =~ /\Q?\E/g;
+    if ($q_marks == 0) {
+        push @all_mappings, $mapping;
+        return;
+    }
 
-    push(@all_mappings, $mapping);
+    my @to_put;
+    for my $i (0..26) {
+        next if substr($mapping, alphnum($c_by_freq[$i]), 1) ne "?";
+        my $current_c = $c_by_freq[$i];
+        push @to_put, $letter_rank[$i];
+
+        if($i == 26) {
+            generate_mappings($mapping, @to_put);
+            return;
+        }
+
+        my $next_c = $c_by_freq[$i + 1];
+        if($freq_c{$current_c} - $freq_c{$next_c} > $total * 0.002) {
+            generate_mappings($mapping, @to_put);
+            return;
+        }
+    }
 }
 
 # root generacji
-generate_mappings($empty_mapping, "_", "I");
+generate_mappings($empty_mapping, "_");
 
 
-# for my $c (@c_by_freq) {
-#     next if $used_letter{$c};
-#     for my $p (@letter_rank) {
-#         next if exists $mapping{$p};
-#         $mapping{$p} = $c;
-#         $used_letter{$c} = 1;
-#         last;
-#     }
-# }
+##########################################################
+# decrypt - ranking mapowan
+
+my $best_map = $all_mappings[0];
+my $best_score = score_mapping($all_mappings[0]);
+
+sub decrypt {
+    my $mapping = shift @_;
+    my $word = shift @_;
+    my $d_word = "";
+
+    for my $i (0..length($word)-1) {
+        my $l = substr($word, $i, 1);
+        my $dl = substr($mapping, alphnum($l), 1) // '?';
+        $d_word .= $dl;
+    }
+    return $d_word;
+}
+
+sub score_mapping {
+    my $mapping = shift @_;
+    my $s = 0;
+
+    foreach my $w (@w_by_freq) {
+        my $dw = decrypt($mapping, $w);
+
+        if (grep { $_ eq $dw } @word_rank) {
+            $s++;
+        }
+    }
+
+    return $s;
+}
+
+foreach my $m (@all_mappings) {
+    my $n_score = score_mapping($m);
+    if ($n_score > $best_score) {
+        $best_map = $m;
+        $best_score = $n_score;
+    }
+}
 
 ##########################################################
 # wypisanie wyniku
 
-print "ABCDEFGHIJKLMNOPQRSTUVWXYZ_\n";
+# print "$best_score \n";
+print "$best_map \n";
 
-foreach my $m (@all_mappings) {
-    print "$m\n";
-}
 
