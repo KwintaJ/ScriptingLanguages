@@ -108,11 +108,9 @@ my $empty_mapping = "???????????????????????????";
 
 # zamiana litery na jej miejsce w alfabecie: 
 sub alphnum {
-    my ($char) = @_;
-    if($char eq "_") {
-        return 26; # _=26
-    }
-    return ord($char) - ord('A');  # A=0, B=1, ..., Z=25
+    my ($c) = @_;
+    return 26 if $c eq "_"; # _=26
+    return ord($c) - ord('A');  # A=0, B=1, ..., Z=25
 }
 
 # rekurencyjne generowanie mapowan
@@ -219,7 +217,17 @@ foreach my $m (@all_mappings) {
 ##########################################################
 # wypisanie wyniku
 
-# print "$best_score \n";
-print "$best_map \n";
+my $print_map = "???????????????????????????";
 
+sub numalph {
+    my ($n) = @_;
+    return '_' if $n == 26;
+    return chr(ord('A') + $n);
+}
 
+for my $i (0..26) {
+    my $l = substr($best_map, $i, 1);
+    substr($print_map, alphnum($l), 1) = numalph($i);
+}
+
+print "$print_map \n";
