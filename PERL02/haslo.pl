@@ -31,7 +31,10 @@ close $filehandler;
 
 ##########################################################
 # zliczanie czestosci znakow
-my %freq_c;
+$content= uc($content); 
+$content=~ s/ /_/g;
+
+my %freq_c = ("A" => 0, "B" => 0, "C" => 0, "D" => 0, "E" => 0, "F" => 0, "G" => 0, "H" => 0, "I" => 0, "J" => 0, "K" => 0, "L" => 0, "M" => 0, "N" => 0, "O" => 0, "P" => 0, "R" => 0, "S" => 0, "T" => 0, "U" => 0, "V" => 0, "W" => 0, "X" => 0, "Y" => 0, "Z" => 0, "_" => 0);
 my $total = 0;
 
 for my $c (split //, $content) {
@@ -44,22 +47,38 @@ my @c_by_freq = sort { $freq_c{$b} <=> $freq_c{$a} } keys %freq_c;
 foreach my $c (@c_by_freq) {
     print "$c $freq_c{$c}\n";
 }
-
 print "\n";
+
+##########################################################
+# przetworzenie spacji
+my $space_c = $c_by_freq[0];
+
+$content=~ s/$space_c/ /g;
+
+my $filehandler2;
+open $filehandler2, '>:raw', 'wc_in.txt';
+
+print $filehandler2 $content;
+
+close $filehandler2;
 
 ##########################################################
 # zliczanie czestosci slow
 
-system("perl ./wc.pl -p $filename > wc_out.txt");
+system("perl ./wc.pl -p wc_in.txt > wc_out.txt");
 
-my $filehandler2;
-open $filehandler2, '<:raw', 'wc_out.txt';
+my $filehandler3;
+open $filehandler3, '<:raw', 'wc_out.txt';
 
 local $/;
-my $wc_result = <$filehandler2>;
+my $wc_result = <$filehandler3>;
 
-close $filehandler2;
+close $filehandler3;
+unlink "wc_in.txt";
 unlink "wc_out.txt";
+
+
+$wc_result=~ s/\?/_/g;
 
 my %freq_w;
 
@@ -74,4 +93,5 @@ my @w_by_freq = sort { $freq_w{$b} <=> $freq_w{$a} } keys %freq_w;
 foreach my $w (@w_by_freq) {
     print "$w $freq_w{$w}\n";
 }
+
 
