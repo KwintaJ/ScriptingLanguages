@@ -67,7 +67,7 @@ close $filehandler2;
 ##########################################################
 # zliczanie czestosci slow
 
-system("perl ./wc.pl -p wc_in.txt > wc_out.txt");
+system("perl ./wc.pl -p -x wc_in.txt > wc_out.txt");
 
 my $filehandler3;
 open $filehandler3, '<:raw', 'wc_out.txt';
@@ -101,7 +101,7 @@ our @w_by_freq = sort { $freq_w{$b} <=> $freq_w{$a} } keys %freq_w;
 # decrypt - analiza czestotliwosciowa
 
 our @letter_rank = qw(_ A E I O Z S L N C W R Y T K M D P J U B G H F V X Q);
-our @word_rank = qw(I SIE W NIE NA Z ZE TO A DO);
+our @word_rank = qw(I SIE W NIE NA Z ZE TO A DO ALE PAN PO TAK BO JAK JA ZA O CO OD JUZ JEJ GO MU ZAGLOBA BYLO JESZCZE MI JEGO RZEKL BYL BASIA MNIE TU TYLKO ZAS DLA PRZEZ WIEC TYM BY ICH ON GDY PANA PRZY SOBIE WOLODYJOWSKI JEST LECZ TEGO NIM POD TAM JAKO CI NAD TERAZ PRZED BEDZIE SAM TEZ BYLA MOZE ZARAZ NIC TEJ KU RYCERZ OCZY POCZAL MALY JENO AZ PANI KTORY AZJA BOG KETLING CZYM CZY CHWILI IM BYC MA TEN JESLI BEZ TE MIAL ZEBY JEDNAK WRESZCIE NIA MIEDZY POTEM OW KTORA TYCH ABY NOWOWIEJSKI MICHAL NIEJ KRZYSIA KTO NICH NIEGO ODRZEKL WACPAN NAGLE NAWET JAKBY KTORE WSZYSTKO ONA CZAS CIE BARDZO LUDZI ZNOW IZ NIECH U PRZECIE WIECEJ RECE ALBO GDZIE MOGL CORAZ RAZ TY RZECZYPOSPOLITEJ WSZYSCY BASI HETMAN DOBRZE MOWIL TYMCZASEM SERCE TWARZ KTORZY BYLY CHOC NAS TUHAJ KTORYCH JE NI NIMI WSZYSTKIE TA GDYBY BOGA WSZYSTKICH OTO DOPIERO GLOWE TRZEBA CZASU TAKZE RZEKLA CALA NIZ POCZELA DZIEN WIEM KTOREJ WLASNIE SIEBIE BASKA NIKT SERCA WOWCZAS DALEJ GLOWY WE ONI MASZ LUB SOBA MOJA CHWILA NIECO ANI SAMA STRONY KONIE NAPRZOD MAM JEDEN CHOCBY WOLODYJOWSKIEGO JAKOBY BOZE PANU KTORYM NAM MOGLA KIEDY COS BEDE CHCIAL RYCERZA ZAWSZE POCZELI KRZYSI WIDOK TAKA SPYTAL PANIE CZASEM JEDNA NOC JAKIS BYLI DLATEGO STARY SILA MOJ WIELKI MIALA KTOREGO POCZELY BYM CHWILE NIGDY TEDY TYLE MALEGO LEPIEJ PRZECIW MOZNA AZJI ZOLNIERZE BARDZIEJ KONIEC DWOCH ZAWOLAL HA MICHALE GLOWA KILKA OT TWARZY GLOSEM KONIA MUSZALSKI LAT RAZEM);
 our @all_mappings;
 
 my $empty_mapping = "???????????????????????????";
@@ -161,7 +161,7 @@ sub generate_mappings {
         }
 
         my $next_c = $c_by_freq[$i + 1];
-        if($freq_c{$current_c} - $freq_c{$next_c} > $total * 0.002) {
+        if($freq_c{$current_c} - $freq_c{$next_c} > $total * 0.0015) {
             generate_mappings($mapping, @to_put);
             return;
         }
@@ -230,4 +230,4 @@ for my $i (0..26) {
     substr($print_map, alphnum($l), 1) = numalph($i);
 }
 
-print "$print_map \n";
+print "$print_map\n";
