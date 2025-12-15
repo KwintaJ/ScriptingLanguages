@@ -54,7 +54,7 @@ our @c_by_freq = sort { $freq_c{$b} <=> $freq_c{$a} } keys %freq_c;
 # przetworzenie spacji
 our $space_c = $c_by_freq[0];
 
-$content=~ s/$space_c/ /g;
+$content =~ s/$space_c/ /g;
 
 
 my $filehandler2;
