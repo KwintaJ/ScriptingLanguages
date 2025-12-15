@@ -11,7 +11,7 @@ use warnings;
 ##########################################################
 # parsowanie argumentow 
 my %opts = (
-    c => 0, m => 0, l => 0, w => 0, p => 0, i => 0
+    c => 0, m => 0, l => 0, w => 0, p => 0, i => 0, x => 0
 );
 
 my $noopts = 0;
@@ -119,6 +119,10 @@ if ($opts{p}) {
 
     # wypisanie top 10
     my $lim = 9;
+    if ($opts{x}) {
+        $lim = 200;
+    }
+
     if(@sorted < 9) {
         $lim = @sorted - 1;
     }
