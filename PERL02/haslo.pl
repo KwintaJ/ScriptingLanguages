@@ -35,15 +35,15 @@ $content= uc($content);
 $content =~ s/\r?\n//g;
 $content=~ s/ /_/g;
 
-my %freq_c = ("A" => 0, "B" => 0, "C" => 0, "D" => 0, "E" => 0, "F" => 0, "G" => 0, "H" => 0, "I" => 0, "J" => 0, "K" => 0, "L" => 0, "M" => 0, "N" => 0, "O" => 0, "P" => 0, "R" => 0, "S" => 0, "T" => 0, "U" => 0, "V" => 0, "W" => 0, "X" => 0, "Y" => 0, "Z" => 0, "_" => 0);
-my $total = 0;
+our %freq_c = ("A" => 0, "B" => 0, "C" => 0, "D" => 0, "E" => 0, "F" => 0, "G" => 0, "H" => 0, "I" => 0, "J" => 0, "K" => 0, "L" => 0, "M" => 0, "N" => 0, "O" => 0, "P" => 0, "R" => 0, "S" => 0, "T" => 0, "U" => 0, "V" => 0, "W" => 0, "X" => 0, "Y" => 0, "Z" => 0, "_" => 0);
+our $total = 0;
 
 for my $c (split //, $content) {
     $freq_c{$c}++;
     $total++;
 }
 
-my @c_by_freq = sort { $freq_c{$b} <=> $freq_c{$a} } keys %freq_c;
+our @c_by_freq = sort { $freq_c{$b} <=> $freq_c{$a} } keys %freq_c;
 
 foreach my $c (@c_by_freq) {
     print "$c $freq_c{$c}\n";
@@ -52,7 +52,7 @@ print "\n";
 
 ##########################################################
 # przetworzenie spacji
-my $space_c = $c_by_freq[0];
+our $space_c = $c_by_freq[0];
 
 $content=~ s/$space_c/ /g;
 
@@ -82,7 +82,7 @@ unlink "wc_out.txt";
 
 $wc_result=~ s/\?/_/g;
 
-my %freq_w;
+our %freq_w;
 
 for my $line (split /\n/, $wc_result) {
     chomp $line;
@@ -90,7 +90,7 @@ for my $line (split /\n/, $wc_result) {
     $freq_w{$word} = $count;
 }
 
-my @w_by_freq = sort { $freq_w{$b} <=> $freq_w{$a} } keys %freq_w;
+our @w_by_freq = sort { $freq_w{$b} <=> $freq_w{$a} } keys %freq_w;
 
 foreach my $w (@w_by_freq) {
     print "$w $freq_w{$w}\n";
@@ -100,37 +100,81 @@ print "\n";
 ##########################################################
 # decrypt - analiza czestotliwosciowa
 
-my %mapping;
-my %used_plain;
-$mapping{$space_c} = "_";
-$used_plain{$space_c} = 1;
+our @letter_rank = qw(A E I O Z S L N C W R Y T K M D P J U B G H F V X Q);
+our @word_rank = qw(I SIE W NIE NA Z ZE TO A DO);
+our @all_mappings;
 
-my @one_letter = grep { length($_) == 1 } @w_by_freq;
-$mapping{$one_letter[0]} = "I";
-$used_plain{$one_letter[0]} = 1;
+my $empty_mapping = "???????????????????????????";
 
-my @letter_rank = qw(A E I O Z S L N C W R Y T K M D P J U B G H F V X Q);
-
-for my $c (@c_by_freq) {
-    next if exists $mapping{$c};
-    for my $p (@letter_rank) {
-        next if $used_plain{$p};
-        $mapping{$c} = $p;
-        $used_plain{$p} = 1;
-        last;
+# zamiana litery na jej miejsce w alfabecie: 
+sub alphnum {
+    my ($char) = @_;
+    if($char eq "_") {
+        return 26; # _=26
     }
+    return ord($char) - ord('A');  # A=0, B=1, ..., Z=25
 }
+
+# rekurencyjne generowanie mapowan
+# rekurencja rozdziela sie w przypadku sytuacji watpliwej
+sub generate_mappings {
+    my @args = @_;
+    my $mapping = shift @args;
+    my @letters;
+
+    for my $arg (@args) {
+        push @letters, $arg;
+    }
+
+    for my $i (0..26) {
+        if (substr($mapping, alphnum($c_by_freq[$i]), 1) eq "?") {
+            if(@letters == 1) {
+                substr($mapping, alphnum($c_by_freq[$i]), 1) = $letters[0];
+                last;
+            }
+            else {
+                for my $i (0..@letters-1) {
+                    my @almost_all_letters = @letters;
+                    substr($mapping, alphnum($c_by_freq[$i]), 1) = $letters[$i];
+                    splice(@almost_all_letters, $i, 1);
+                    generate_mappings($mapping, @almost_all_letters);
+                }
+                return;
+            }
+        }
+    }
+
+    # for my $i (0..26) {
+    #     if (substr($mapping, alphnum($c_by_freq[$i]), 1) eq "?") {
+    #         my $current_c = $c_by_freq[$i];
+    #         my $next_c
+    #         if($freq_c{$current_c}
+    #     }
+    # }
+
+    push(@all_mappings, $mapping);
+}
+
+# root generacji
+generate_mappings($empty_mapping, "_", "I");
+
+
+# for my $c (@c_by_freq) {
+#     next if $used_letter{$c};
+#     for my $p (@letter_rank) {
+#         next if exists $mapping{$p};
+#         $mapping{$p} = $c;
+#         $used_letter{$c} = 1;
+#         last;
+#     }
+# }
 
 ##########################################################
 # wypisanie wyniku
 
-foreach my $k (sort keys %mapping) {
-    print "$k";
-}
-print "\n";
+print "ABCDEFGHIJKLMNOPQRSTUVWXYZ_\n";
 
-foreach my $l (sort keys %mapping) {
-    print "$mapping{$l}";
+foreach my $m (@all_mappings) {
+    print "$m\n";
 }
-print "\n";
 
