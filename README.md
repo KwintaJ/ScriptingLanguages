@@ -10,4 +10,5 @@ Programy pisane w ramach laboratoriów z kursu *Języki Skryptowe* prowadzonych 
 **SHELL04**: Skrypt server-klient + skrypt kontrolny dla usługi systemowej; socat, nc, lsof  
 **PERL01**: Podstawy języka Perl: argumenty wywołania, tablice i tablice asosjacyjne, operacje na plikach, sortowanie  
 **PERL02**: Praca na dużych plikach, przetwarzanie tekstu, wc i prosty łamacz haseł substytucyjnych  
-**PERL03**: Parsowanie plikow XLSX  
+**PERL03**: Parsowanie plików XLSX  
+**PERL03**: Połączenia do bazy danych SQLite, create table, insert, select query  
