@@ -63,15 +63,38 @@ foreach my $filename (@ARGV) {
     # budowanie INSERT 
     my $question_marks = join(", ", ("?") x scalar @columns);
     my $sql_insert = "INSERT INTO $tablename (" . join(", ", @columns) . ") VALUES ($question_marks)";
-    my $sth = $dbh->prepare($sql_insert);
+    my $q = $dbh->prepare($sql_insert);
 
     # wstawianie danych
     while (my $line = <$fh>) {
         chomp($line);
         my @values = split(',', $line);
-        $sth->execute(@values);
+        $q->execute(@values);
     }
 
     close($fh);
 }
 
+##########################################################
+# zapytanie top 4 pracownikow
+my $query = "
+    SELECT 
+        e.name, 
+        e.surname, 
+        u.email, 
+        SUM(s.salary) AS total_salary
+    FROM employees e
+    JOIN user_data u ON e.id = u.employee_id
+    JOIN salaries s ON e.id = s.employee_id
+    GROUP BY e.id
+    ORDER BY total_salary DESC, u.email ASC
+    LIMIT 4
+";
+
+my $query_report = $dbh->prepare($query);
+$query_report->execute();
+
+# wypisanie
+while (my @row = $query_report->fetchrow_array()) {
+    printf("%s | %s | %s | %d\n", $row[0], $row[1], $row[2], $row[3]);
+}
