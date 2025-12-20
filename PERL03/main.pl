@@ -19,7 +19,7 @@ my $file_IN;
 my $file_OUT;
 
 ##########################################################
-# przetworzenie argumentow wywolana
+# przetworzenie argumentow wywolania
 if (@ARGV < 4) {
     die "Arg error";
 }
