@@ -95,6 +95,8 @@ my $query_report = $dbh->prepare($query);
 $query_report->execute();
 
 # wypisanie
+print "Top 4 employees with highest total salaries:\n"
+print "----------------------------------------\n"
 while (my @row = $query_report->fetchrow_array()) {
     printf("%s | %s | %s | %d\n", $row[0], $row[1], $row[2], $row[3]);
 }
