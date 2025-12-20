@@ -12,7 +12,21 @@ use warnings;
 
 use Exporter 'import';
 
-our @EXPORT_OK = qw();
+our @EXPORT = qw();
 
+sub init {
+    my ($n, $m) = @_;
+    # TODO
+}
+
+sub addReadXLS {
+    my $filename = @_;
+    # TODO
+}
+
+sub saveCSV {
+    my $filename = @_;
+    # TODO
+}
 
 1;
