@@ -12,3 +12,4 @@ Programy pisane w ramach laboratoriów z kursu *Języki Skryptowe* prowadzonych 
 **PERL02**: Praca na dużych plikach, przetwarzanie tekstu, wc i prosty łamacz haseł substytucyjnych  
 **PERL03**: Parsowanie plików XLSX  
 **PERL03**: Połączenia do bazy danych SQLite, create table, insert, select query  
+**PYTHON01**: Porównanie obliczeń sekwencyjnych, wieloprocesowych i wielowątkowych dla różnych ustawień blokady Global Interpreter Lock  
