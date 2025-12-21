@@ -1,0 +1,149 @@
+\documentclass[14pt, table]{extarticle}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, total={7in, 10.5in}]{geometry}
+\usepackage[table]{xcolor}
+\usepackage{tgbonum}
+\usepackage{float}
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+\DeclareGraphicsExtensions{.png,.jpg}
+\usepackage{caption}
+\usepackage{tikz}
+\usepackage[T1]{fontenc}
+\usetikzlibrary{quotes,angles}
+\usetikzlibrary{arrows}
+
+\title{\textbf{Raport} \\ \Large{PYTHON01}}
+\date{21 grudnia 2025}
+\author{ \Large{Jan Kwinta} }
+
+
+\newcommand{\nl}{\vspace{0.5cm}}
+\newcommand{\nz}{\vspace{1.5cm}}
+\newcommand{\zatem}{\textrm{Zatem }}
+
+
+\begin{document}
+\maketitle
+
+\paragraph{Wstęp \\}
+Celem ćwiczenia jest porównanie działania: kodu sekwencyjnego, 
+wieloprocesowego (multiprocessing) oraz wielowątkowego (threading) w dwóch środowiskach: 
+Python z GIL oraz Python skompilowany w wersji free-threaded (bez {\it Global Interpreter Lock}).
+\\ 
+
+Do raportu dołączony jest kod python01.py, którego zadaniem jest wygenerowanie słownika
+\begin{verbatim}{ "id": ..., "text": "..."}\end{verbatim} oraz wykonanie pewnych operacji na nim:
+policzenia liczby słów w każdym tekście, liczby unikatowych liter oraz score - liczby samogłosek.
+Dla każdego tekstu trzymamy wyniki w tablicy results.
+\\
+
+Przykładowo dla rekordu \begin{verbatim}{'id': i, 'text': 'eqqkvk cpiylsj xzhgxw vavuq 
+vhvez bbkgtvc tya gsiwjq ansk hurxb'}\end{verbatim}
+w tablicy results będzie się znajdowało \begin{verbatim}results[i] = {'word_count': 10, 'unique': 22, 'score': 11}\end{verbatim}
+
+\newpage
+\paragraph{Skrypt i wyniki \\}
+W odpowiednio przygotowanym środowisku skrypt był uruchamiany za pomocą komend:
+\begin{itemize}
+    \item \begin{verbatim} python3 -X gil=1 python01.py \end{verbatim}
+    \item \begin{verbatim} python3 -X gil=0 python01.py \end{verbatim}
+\end{itemize}
+
+Przykładowe wyniki tych poleceń to odpowiednio:
+
+\begin{verbatim}
+GIL = True
+Sekwencyjnie: 2.7484s
+Multiprocessing: 0.8269s | Czy poprawny: True
+Threading (bez zabezpieczen): 3.1285s | Czy poprawny: True
+Threading (z synchronizacja): 3.3266s | Czy poprawny: True
+\end{verbatim}
+
+oraz
+
+\begin{verbatim}
+GIL = False
+Sekwencyjnie: 2.7488s
+Multiprocessing: 0.8695s | Czy poprawny: True
+Threading (bez zabezpieczen): 1.1311s | Czy poprawny: True
+Threading (z synchronizacja): 1.4181s | Czy poprawny: True
+\end{verbatim}
+
+\paragraph{Poprawność obliczeń \\}
+W teorii w wynikach wersji wielowątkowej bez żadnych blokad mogą pojawiać się nieścisłości, błędy lub pominięte rekordy.
+Mimo eksperymentowania z obciążeniem przy liczeniu, liczbą wątków i rekordów ani razu nie udało mi się wykryć takiego błędu,
+nawet przy stworzeniu idealnego miejsca, w którym może wystąpić {\it race condition}:
+
+\begin{verbatim}
+def worker():
+    while True:
+        try:
+            record = shared_data_list.pop()
+        #...
+        rid, res = process_record(record)
+        results[rid] = res
+#...
+
+for _ in range(num_threads):
+    t = threading.Thread(target=worker)
+    #...
+    t.start()
+\end{verbatim}
+
+\newpage
+\paragraph{Obciążenie procesora \\}
+W czasie różnych obliczeń zmieniało się obciążenie poszczególnych rdzeni.
+Poniżej zrzuty ekranu z htop przy wykonywaniu obliczeń skrytpu dla GIL=0.
+\begin{figure}[H]
+\includegraphics[scale=0.5]{htopseq}
+\centering
+\captionsetup{labelformat=empty}
+\caption{Obciążenie CPU przy obliczeniach sekwencyjnych.}
+\end{figure}
+
+\begin{figure}[H]
+\includegraphics[scale=0.5]{htoppr}
+\centering
+\captionsetup{labelformat=empty}
+\caption{Obciążenie CPU przy obliczeniach wieloprocesowych.}
+\end{figure}
+
+
+\begin{figure}[H]
+\includegraphics[scale=0.5]{htopth}
+\centering
+\captionsetup{labelformat=empty}
+\caption{Obciążenie CPU przy obliczeniach wielowątkowych.}
+\end{figure}
+
+\newpage
+\paragraph{Interpretacja wyników \\}
+
+Dla obliczeń sekwencyjnych i wieloprocesowych czas dla wersji pythona z blokadą globalną i bez nie zmienił się dużo.
+Obliczenia wieloprocesowe, które zajmowały wszystkie rdzenie CPU były szybsze niż sekwencyjne.
+\\
+
+Obliczenia wielowątkowe z GIL były podobne, a nawet trochę wolniejsze niż sekwencyjne. GIL sprawia, że w każdej jednostce czasu tylko jeden z wątków wykonuje obliczenia. Pozostałe wątki czekają na swoją kolej.
+\\
+
+Wyłączenie GIL, możliwe w Pythonie 3.13, sprawia, że wiele wątków może wykonywać kod Pythona w tym samym czasie na różnych rdzeniach. Przyspiesza to znacząco czas w stosunku do wersji sekwencyjnej i 
+zajmuje wszystkie rdzenie procesora - nie jest jednak tak wydajne (ani tak obciążające) jak wersja multiprocess, ponieważ Python musi zarządzać wieloma małymi blokadami (tzw. {\it fine-grained locking}) wewnątrz obiektów.
+\\
+
+\paragraph{Podsumowanie \\}
+Różnice pomiędzy podejściem wieloprocesowym a wielowątkowym (bez GIL) można podsumować w tabelce:
+\\
+
+\begin{table}[h]
+\begin{tabular}{lll}
+ & {\bf Multiprocessing} & {\bf Threading} \\
+{\bf Pamięć} & Osobna & Współdzielona \\
+{\bf Komunikacja} & Trudna & Współdzielone obiekty \\
+{\bf Zużycie RAM} & Wysokie & Niskie \\
+{\bf Bezpieczeństwo} & Brak {\it race conditions} & Wymaga użycia blokad \\
+\end{tabular}
+\end{table}
+\end{document}
