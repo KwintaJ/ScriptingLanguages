@@ -4,6 +4,7 @@
 #
 # Problem PYTHON01
 
+import sys
 import time
 import random
 import string
@@ -12,8 +13,8 @@ import threading
 
 ##########################################################
 # wartosci stale - konfiguracja
-NUM_RECORDS = 250000
-NUM_WORKERS = 4
+NUM_RECORDS = 150000
+NUM_WORKERS = 6
 
 ##########################################################
 # tworzenie slownika
@@ -21,7 +22,7 @@ def generate_data(n):
     data = []
     for i in range(n):
         # generacja losowego tekstu
-        random_text = ' '.join(''.join(random.choices(string.ascii_lowercase, k=random.randint(3, 8))) for _ in range(10))
+        random_text = ' '.join(''.join(random.choices(string.ascii_lowercase, k=random.randint(3, 7))) for _ in range(random.randint(2, 100)))
         data.append({"id": i, "text": random_text})
     return data
 
@@ -32,8 +33,28 @@ def process_record(record):
     words = text.split()
     unique_letters = len(set(c for c in text if c.isalpha()))
     score = text.count('a') + text.count('e') + text.count('i') + text.count('o') + text.count('u') + text.count('y')
-    
     return record["id"], { "word_count": len(words), "unique": unique_letters, "score": score }
+
+##########################################################
+# weryfikacja rezultatow
+def verify_results(base_results, test_results):
+    if len(base_results) != len(test_results):
+        return -1
+
+    for i in range(NUM_RECORDS):
+        if i not in test_results:
+            return -2
+        
+        if base_results[i]["word_count"] != test_results[i]["word_count"]:
+            return -3
+
+        if base_results[i]["unique"] != test_results[i]["unique"]:
+            return -4
+
+        if base_results[i]["score"] != test_results[i]["score"]:
+            return -5
+
+    return 1
 
 ##########################################################
 ###### SEKWENCYJNIE ######
@@ -76,25 +97,25 @@ def run_multiprocessing(data):
 ###### MULTITHREADING ######
 # Unsafe
 def run_threading_unsafe(data):
+    shared_data_list = list(data) 
     results = {}
-    num_threads = NUM_WORKERS
-    chunk_size = len(data) // num_threads
     threads = []
+    num_threads = NUM_WORKERS
 
-    def worker(chunk):
-        for record in chunk:
+    def worker():
+        while True:
+            try:
+                record = shared_data_list.pop()
+            except IndexError:
+                # lista jest pusta - koniec
+                break
+            
             rid, res = process_record(record)
-            # modyfikacja wspolnego slownika
             results[rid] = res
 
     start = time.time()
-    for i in range(num_threads):
-        # podzial danych na porcje
-        start_idx = i * chunk_size
-        end_idx = None if i == num_threads - 1 else (i + 1) * chunk_size
-        chunk = data[start_idx:end_idx]
-        
-        t = threading.Thread(target=worker, args=(chunk,))
+    for _ in range(num_threads):
+        t = threading.Thread(target=worker)
         threads.append(t)
         t.start()
 
@@ -106,26 +127,27 @@ def run_threading_unsafe(data):
 
 # Thread-lock
 def run_threading_safe(data):
+    shared_data_list = list(data) 
     results = {}
+    threads = []
     lock = threading.Lock()
     num_threads = NUM_WORKERS
-    chunk_size = len(data) // num_threads
-    threads = []
 
-    def worker(chunk):
-        for record in chunk:
+    def worker():
+        while True:
+            with lock:
+                try:
+                    record = shared_data_list.pop()
+                except IndexError:
+                    # lista jest pusta - koniec
+                    break
             rid, res = process_record(record)
-            # synchronizacja
             with lock:
                 results[rid] = res
 
     start = time.time()
-    for i in range(num_threads):
-        start_idx = i * chunk_size
-        end_idx = None if i == num_threads - 1 else (i + 1) * chunk_size
-        chunk = data[start_idx:end_idx]
-        
-        t = threading.Thread(target=worker, args=(chunk,))
+    for _ in range(num_threads):
+        t = threading.Thread(target=worker)
         threads.append(t)
         t.start()
 
@@ -140,10 +162,10 @@ def run_threading_safe(data):
 ##########################################################
 ###### MAIN ######
 if __name__ == "__main__":
-    data = generate_data(NUM_RECORDS)
 
-    print(data[0])
-    print(process_record(data[0]))
+    print(f"GIL = {sys._is_gil_enabled()}")
+
+    data = generate_data(NUM_RECORDS)
 
     ### Sekwencyjnie
     results_0, time_0 = run_sequential(data)
@@ -151,17 +173,15 @@ if __name__ == "__main__":
     
     ### Multiprocessing
     results_1, time_1 = run_multiprocessing(data)
-    is_correct_1 = True;
-    for i in range(NUM_RECORDS):
-        if ():
+    is_correct_1 = verify_results(results_0, results_1) == 1
     print(f"Multiprocessing: {time_1:.4f}s | Czy poprawny: {is_correct_1}")
         
     ### Threading
     results_2, time_2 = run_threading_unsafe(data)
-    is_correct_2 = results_0 == results_2
+    is_correct_2 = verify_results(results_0, results_2) == 1
     print(f"Threading (bez zabezpieczen): {time_2:.4f}s | Czy poprawny: {is_correct_2}")
         
     ### Threading z synchronizacja
     results_3, time_3 = run_threading_safe(data)
-    is_correct_3 = results_0 == results_3
+    is_correct_3 = verify_results(results_0, results_3) == 1
     print(f"Threading (z synchronizacja): {time_3:.4f}s | Czy poprawny: {is_correct_3}")
