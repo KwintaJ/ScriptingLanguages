@@ -1,3 +1,10 @@
+# Jan Kwinta
+#
+# 28.12.2025
+#
+# Problem PYTHON02
+# setup for matmul_cy.pyx
+
 from setuptools import setup
 from Cython.Build import cythonize
 import numpy as np

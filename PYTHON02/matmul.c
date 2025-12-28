@@ -1,3 +1,10 @@
+// Jan Kwinta
+//
+// 28.12.2025
+//
+// Problem PYTHON02
+// matmul.c
+
 #include <stdio.h>
 
 void mult(int* A, int* B, int* C, int rowsA, int colsA, int colsB) {

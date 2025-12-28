@@ -1,3 +1,10 @@
+# Jan Kwinta
+#
+# 28.12.2025
+#
+# Problem PYTHON02
+# matmul_cy.pyx
+
 import numpy as np
 import cython
 
