@@ -18,9 +18,9 @@ matmul_c.mult.argtypes = [
     ctypes.POINTER(ctypes.c_int), # A
     ctypes.POINTER(ctypes.c_int), # B
     ctypes.POINTER(ctypes.c_int), # C
-    ctypes.c_int,                 # rowsA
-    ctypes.c_int,                 # colsA
-    ctypes.c_int                  # colsB
+    ctypes.c_int,                 # n
+    ctypes.c_int,                 # m
+    ctypes.c_int                  # p
 ]
 matmul_c.mult.restype = None
 
@@ -116,8 +116,8 @@ def mult_c(mxA, mxB):
 ##########################################################
 ###### MAIN ######
 
-A = generate_matrix(200, 3000)
-B = generate_matrix(3000, 500)
+A = generate_matrix(1200, 5000)
+B = generate_matrix(5000, 500)
 
 ### Python
 result_0, time_0 = mult_python(A, B)
