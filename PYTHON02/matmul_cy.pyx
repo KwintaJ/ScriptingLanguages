@@ -1,0 +1,2 @@
+def mult():
+    print("hello")
