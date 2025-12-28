@@ -1,0 +1,94 @@
+\documentclass[14pt, table]{extarticle}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper, total={7in, 10.5in}]{geometry}
+\usepackage[table]{xcolor}
+\usepackage{tgbonum}
+\usepackage{float}
+\usepackage{graphicx}
+\graphicspath{ {./images/} }
+\DeclareGraphicsExtensions{.png,.jpg}
+\usepackage{caption}
+\usepackage{tikz}
+\usepackage[T1]{fontenc}
+\usetikzlibrary{quotes,angles}
+\usetikzlibrary{arrows}
+
+\title{\textbf{Raport} \\ \Large{PYTHON02}}
+\date{28 grudnia 2025}
+\author{ \Large{Jan Kwinta} }
+
+
+\newcommand{\nl}{\vspace{0.5cm}}
+\newcommand{\nz}{\vspace{1.5cm}}
+
+
+\begin{document}
+\maketitle
+
+\paragraph{Wstęp \\}
+Celem ćwiczenia jest analiza wydajności różnych podejść do 
+implementacji mnożenia macierzy w Pythonie. Mnożenie macierzy zostało wybrane
+ze względu na to, że jest to wymagający algorytm. W tym raporcie porównywane podejścia do jego implementacji to:
+\begin{itemize}
+    \item Czysta implementacja w pythonie: funkcja z trzema zagnieżdżonymi pętlami for, operująca na listach list (macierz jako lista wierszy),
+    \item NumPy: implementacja wykorzystująca gotowe struktury i funkcje biblioteki numpy, np operator @,
+    \item Cython: funkcja napisana w pliku .pyx, z typowanymi zmiennymi skompilowana do kodu w C, używana jako moduł w pythonie,
+    \item Zewnętrzna funkcja w C: czyste C skompilowane do współdzielonej biblioteki wywoływana z Pythona za pomocą ctypes.
+\end{itemize}
+\nl
+
+Do raportu dołączony jest kod python02.py, oraz implementacje mnożenia macierzy w cythonie (matmul\_cy.pyx) i w C (matmul.c).
+Zadaniem skryptu python02.py jest wygenerowanie dwóch całkiem dużych macierzy zapełnionych losowymi liczbami całkowitymi oraz pomnożenie 
+ich przez siebie na te cztery różne sposoby. Mnożąc mierzy czas tych podejść oraz upewnia się, że wszystkie wyniki są identyczne.
+\\ 
+
+\newpage
+\paragraph{Wyniki \\}
+Przykładowy wynik skryptu python02:
+\begin{verbatim}
+        Python: 238.3237s
+        Numpy: 2.8895s | Correct: True
+        Cython: 1.9583s | Correct: True
+        External C: 1.9164s | Correct: True
+\end{verbatim}
+
+Powyższy wynik został osiągnięty przy mnożeniu dwóch macierzy o wymiarach rzędu tysiąc na kilka tysięcy.
+\\
+
+Jak widać różnica w czasie wykonania między podejściami jest ogromna.
+Na mojej maszynie już przy macierzach o wymiarach 500x500 czas wykonania mnożenia przy użyciu NumPy, Cythona i C jest sto razy szybszy od
+podejścia czysto pythonowskiego. Przy większych rozmiarach, od 1000x1000, widać też różnicę między stosowaniem NumPy a Cythonem/C: mniej więcej
+30-40\% przyspieszenia. Czasy wykonania Cythona i C są podobne niezależnie od wymiarów macierzy.
+\\
+\nz
+
+Dlaczego tak się dzieje? Takie różnice w czasach wykonania wynikają z kilku rzeczy:
+Każda liczba w Pythonie to obiekt. Trzymanie macierzy jako listy wierszy i iterowanie 
+po nich sprawia, że każde dodawanie kosztuje dużo (pobranie wskaźnika, rozpakowanie,
+wyciągnięcie wartości, obliczenia, zapakowanie w nowy obiekt). 
+
+W języku C (biblioteka NumPy jest 
+"pod spodem" pisana też w C) operacje dzieją się na niższym poziomie: dane leżą obok siebie w pamięci
+nieopakowane - to sprawia, że bez rozpakowania można podać je na procesor, a także można korzystać z cache'owania.
+
+Przy wielu obliczeniach NumPy przegrywa z czystym C z kilku powodów: np jest pisany uniwersalnie i bezpiecznie, a
+moja implementacja pomija testy typów oraz sprawdzanie i komunikowanie błędów, które oczywiście jest wymagane w 
+publicznej bibliotece.
+
+\newpage
+\paragraph{Cython i sprawdzanie błędów \\}
+Wyłączenie sprawdzania przez Cythona błędów wyjścia poza tablicę oraz {\it wraparound'u} czyli
+użycia indeksu [-1] w tablicach sprawia, że zagnieżdżone liczenie w środku pętli może odbywać się
+w całości w czystym C, bez interakcji z Pythonem, co zwiększa wydajność wygenerowanego kodu: osiągnięte
+zostało "{\it C-speed}" czyli kod generowany przez cythona jest na poziomie wydajnościowym czystego C.
+
+\begin{figure}[H]
+\includegraphics[scale=0.7]{A}
+\centering
+\captionsetup{labelformat=empty}
+\caption{Zawartość matmul\_cy.html wygenerowana przez cython -a. W środku pętli brak żółtych linii.}
+\end{figure}
+
+\end{document}
