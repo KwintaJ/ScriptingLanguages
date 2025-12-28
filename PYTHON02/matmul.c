@@ -7,14 +7,14 @@
 
 #include <stdio.h>
 
-void mult(int* A, int* B, int* C, int rowsA, int colsA, int colsB) {
-    for (int i = 0; i < rowsA; i++) {
-        for (int j = 0; j < colsB; j++) {
+void mult(const int *A, const int *B, int *C, int n, int m, int p) {
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < p; j++) {
             int sum = 0;
-            for (int k = 0; k < colsA; k++) {
-                sum += A[i * colsA + k] * B[k * colsB + j];
+            for (int k = 0; k < m; k++) {
+                sum += A[i * m + k] * B[k * p + j];
             }
-            C[i * colsB + j] = sum;
+            C[i * p + j] = sum;
         }
     }
 }
